@@ -55,3 +55,4 @@ GameEngine/ArtificialIntelligenceEngine/Debug/*
 GameEngine/NetworkingEngine/Debug/*
 GameEngine/GameplayEngine/Debug/*
 GameEngine/Debug/*
+*.sdf
