@@ -45,3 +45,11 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+
+GameEngine/DemoApp/Debug/*
+GameEngine/PhysicsEngine/Debug/*
+GameEngine/GraphicsEngine/Debug/*
+GameEngine/ArtificialIntelligenceEngine/Debug/*
+GameEngine/NetworkingEngine/Debug/*
+GameEngine/GameplayEngine/Debug/*
+GameEngine/Debug/*
