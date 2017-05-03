@@ -10,10 +10,22 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ArtificialIntelligenceEngine", "ArtificialIntelligenceEngine\ArtificialIntelligenceEngine.vcxproj", "{AC307504-A603-4A10-B1DE-D6B06F420EA1}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DemoApp", "DemoApp\DemoApp.vcxproj", "{0A03D6A8-921F-4A9E-97F9-A49251C7EB48}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AC307504-A603-4A10-B1DE-D6B06F420EA1} = {AC307504-A603-4A10-B1DE-D6B06F420EA1}
+		{29684BB9-5948-43C4-BE8D-2D3B3497DF5D} = {29684BB9-5948-43C4-BE8D-2D3B3497DF5D}
+		{C1A53BBC-F564-4C38-8F2F-6DFE94C55EE5} = {C1A53BBC-F564-4C38-8F2F-6DFE94C55EE5}
+		{89CB73C9-1B05-4632-8037-9F1479CAE8AF} = {89CB73C9-1B05-4632-8037-9F1479CAE8AF}
+		{D5C716FC-8F5C-434E-80E4-57174FFD968A} = {D5C716FC-8F5C-434E-80E4-57174FFD968A}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GraphicsEngine", "GraphicsEngine\GraphicsEngine.vcxproj", "{C1A53BBC-F564-4C38-8F2F-6DFE94C55EE5}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GameplayEngine", "GameplayEngine\GameplayEngine.vcxproj", "{29684BB9-5948-43C4-BE8D-2D3B3497DF5D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C1A53BBC-F564-4C38-8F2F-6DFE94C55EE5} = {C1A53BBC-F564-4C38-8F2F-6DFE94C55EE5}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AudioEngine", "AudioEngine\AudioEngine.vcxproj", "{AEBFDEE3-EF46-444A-BB71-48D81EB5640E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -71,6 +83,14 @@ Global
 		{29684BB9-5948-43C4-BE8D-2D3B3497DF5D}.Release|x64.Build.0 = Release|x64
 		{29684BB9-5948-43C4-BE8D-2D3B3497DF5D}.Release|x86.ActiveCfg = Release|Win32
 		{29684BB9-5948-43C4-BE8D-2D3B3497DF5D}.Release|x86.Build.0 = Release|Win32
+		{AEBFDEE3-EF46-444A-BB71-48D81EB5640E}.Debug|x64.ActiveCfg = Debug|x64
+		{AEBFDEE3-EF46-444A-BB71-48D81EB5640E}.Debug|x64.Build.0 = Debug|x64
+		{AEBFDEE3-EF46-444A-BB71-48D81EB5640E}.Debug|x86.ActiveCfg = Debug|Win32
+		{AEBFDEE3-EF46-444A-BB71-48D81EB5640E}.Debug|x86.Build.0 = Debug|Win32
+		{AEBFDEE3-EF46-444A-BB71-48D81EB5640E}.Release|x64.ActiveCfg = Release|x64
+		{AEBFDEE3-EF46-444A-BB71-48D81EB5640E}.Release|x64.Build.0 = Release|x64
+		{AEBFDEE3-EF46-444A-BB71-48D81EB5640E}.Release|x86.ActiveCfg = Release|Win32
+		{AEBFDEE3-EF46-444A-BB71-48D81EB5640E}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
