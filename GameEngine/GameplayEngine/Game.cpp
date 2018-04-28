@@ -1,5 +1,6 @@
 #include "Game.h"
-
+#include <thread>
+#include <functional>
 
 namespace Gameplay
 {
@@ -29,16 +30,12 @@ namespace Gameplay
 
 	void Game::Run()
 	{
-		MSG msg;
-		ZeroMemory(&msg, sizeof(msg));
-
-		while (msg.message != WM_QUIT)
-		{
-			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
-			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-		}
+		_window->Update([=] { 
+			_curScene->Update(); 
+		});
+	}
+	void Game::SetScene(std::unique_ptr<Gameplay::Scene> scene)
+	{
+		_curScene = std::move(scene);
 	}
 }
