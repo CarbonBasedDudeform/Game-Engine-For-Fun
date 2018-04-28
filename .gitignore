@@ -54,5 +54,10 @@ GameEngine/GraphicsEngine/Debug/*
 GameEngine/ArtificialIntelligenceEngine/Debug/*
 GameEngine/NetworkingEngine/Debug/*
 GameEngine/GameplayEngine/Debug/*
+GameEngine/AudioEngine/Debug/*
 GameEngine/Debug/*
-*.sdf
+GameEngine/v15/*
+GameEngine/.vs/*
+GameEngine/*.sdf
+*.ipch
+*.lastbuildstate
