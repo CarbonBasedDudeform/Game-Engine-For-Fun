@@ -25,7 +25,7 @@ namespace Gameplay
 
 	void Game::Initialise(std::string& title, size_t width, size_t height)
 	{
-		_window = std::make_unique<Graphics::Window>(title, width, height);
+		_window = std::make_unique<Graphics::Window>(title, width, height, Graphics::RendererTypes::DX11);
 	}
 
 	void Game::Run()
