@@ -11,7 +11,12 @@ class TestScene : public Gameplay::Scene
 	}
 };
 
-void main()
+int CALLBACK WinMain(
+	__in  HINSTANCE hInstance,
+	__in  HINSTANCE hPrevInstance,
+	__in  LPSTR lpCmdLine,
+	__in  int nCmdShow
+)
 {
 	auto game = std::make_unique<Gameplay::Game>();
 	game->Initialise(std::string("Demo App"), 600, 800);

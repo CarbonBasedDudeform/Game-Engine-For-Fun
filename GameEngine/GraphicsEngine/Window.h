@@ -21,7 +21,6 @@ namespace Graphics
 		HWND _windowHandle;
 		static LRESULT WINAPI WndProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
 		 
-		//move to renderer interface
 		std::unique_ptr<IRenderer> _renderer;
 	};
 }
