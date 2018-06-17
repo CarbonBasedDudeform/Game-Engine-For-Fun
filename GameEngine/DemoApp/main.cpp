@@ -5,9 +5,9 @@
 
 class TestScene : public Gameplay::Scene
 {
-	void Update() 
+	void RenderFrame()
 	{
-
+		
 	}
 };
 

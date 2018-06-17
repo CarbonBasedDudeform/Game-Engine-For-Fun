@@ -1,5 +1,6 @@
 #include "Window.h"
 #include "DX11Renderer.h"
+#include <chrono>
 
 namespace Graphics
 {
@@ -50,7 +51,7 @@ namespace Graphics
 	Window::~Window()
 	{
 	}
-	void Window::Update(const std::function<void()> gameLoop)
+	void Window::Update(const std::function<void()> renderFrame)
 	{
 		MSG msg;
 		ZeroMemory(&msg, sizeof(msg));
@@ -65,7 +66,7 @@ namespace Graphics
 			else
 			{
 				_renderer->PreFrameRenderBehaviour();
-				gameLoop();
+				renderFrame();
 				_renderer->PostFrameRenderBehaviour();
 			}
 		}

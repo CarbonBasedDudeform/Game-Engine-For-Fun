@@ -31,7 +31,7 @@ namespace Gameplay
 	void Game::Run()
 	{
 		_window->Update([=] { 
-			_curScene->Update(); 
+			_curScene->RenderFrame(); 
 		});
 	}
 	void Game::SetScene(std::unique_ptr<Gameplay::Scene> scene)

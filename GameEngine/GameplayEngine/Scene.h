@@ -6,7 +6,7 @@ namespace Gameplay
 	{
 	public:
 		Scene();
-		~Scene();
-		virtual void Update() = 0;
+		virtual ~Scene();
+		virtual void RenderFrame() = 0;
 	};
 }
