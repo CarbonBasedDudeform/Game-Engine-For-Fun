@@ -1,6 +1,5 @@
 #include "Window.h"
 #include "DX11Renderer.h"
-#include <chrono>
 
 namespace Graphics
 {
@@ -51,10 +50,12 @@ namespace Graphics
 	Window::~Window()
 	{
 	}
-	void Window::Update(const std::function<void()> renderFrame)
+
+	void Window::Update(const Graphics::RenderFunc&& renderFrame, const UpdateFunc&& updateFunc)
 	{
 		MSG msg;
 		ZeroMemory(&msg, sizeof(msg));
+		_renderer->SetRenderFunc(std::move(renderFrame));
 
 		while (msg.message != WM_QUIT)
 		{
@@ -65,9 +66,8 @@ namespace Graphics
 			} 
 			else
 			{
-				_renderer->PreFrameRenderBehaviour();
-				renderFrame();
-				_renderer->PostFrameRenderBehaviour();
+				updateFunc();
+				_renderer->Render();
 			}
 		}
 	}

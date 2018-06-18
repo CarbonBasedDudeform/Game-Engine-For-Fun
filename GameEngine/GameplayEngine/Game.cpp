@@ -31,7 +31,13 @@ namespace Gameplay
 	void Game::Run()
 	{
 		_window->Update([=] { 
-			_curScene->RenderFrame(); 
+			_curScene->RenderFrame();
+		},
+			[=] {
+			auto currentTime = _clock.now();
+			auto deltaTime = static_cast<GameTimeDelta>(currentTime - _lastUpdateTime);
+			_curScene->Update(deltaTime);
+			_lastUpdateTime = currentTime;
 		});
 	}
 	void Game::SetScene(std::unique_ptr<Gameplay::Scene> scene)

@@ -9,6 +9,11 @@ class TestScene : public Gameplay::Scene
 	{
 		
 	}
+
+	void Update(Gameplay::GameTimeDelta timeDelta)
+	{
+
+	}
 };
 
 int CALLBACK WinMain(

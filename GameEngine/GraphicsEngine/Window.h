@@ -1,8 +1,10 @@
 #pragma once
-#include <string>
 #include <Windows.h>
+
+#include <string>
 #include <functional>
 #include <memory>
+
 #include "IRenderer.h"
 
 
@@ -13,7 +15,7 @@ namespace Graphics
 	public:
 		Window(std::string& title, size_t height, size_t width, RendererTypes renderType);
 		virtual ~Window();
-		void Update(const std::function<void()> gameLoop);
+		void Update(const Graphics::RenderFunc&& renderFunc, const UpdateFunc&& updateFunc);
 	private:
 		void Create(std::string& title, size_t height, size_t width);
 		WNDCLASSEX _window;

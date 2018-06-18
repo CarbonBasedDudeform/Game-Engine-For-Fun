@@ -103,4 +103,11 @@ namespace Graphics
 	{
 		_swapChain->Present(0, 0);
 	}
+
+	void DX11Renderer::Render()
+	{
+		PreFrameRenderBehaviour();
+		_sceneRenderFunc();
+		PostFrameRenderBehaviour();
+	}
 }

@@ -3,9 +3,12 @@
 #include <memory>
 #include "..\GraphicsEngine\Window.h"
 #include "Scene.h"
+#include "GameplayDataStructs.h"
 
 namespace Gameplay
 {
+
+
 	class Game
 	{
 	public:
@@ -20,5 +23,8 @@ namespace Gameplay
 		std::string _windowTitle;
 		std::unique_ptr<Graphics::Window> _window;
 		std::unique_ptr<Gameplay::Scene> _curScene;
+
+		GameClock _clock;
+		GameTimeDelta _lastUpdateTime;
 	};
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include "GameplayDataStructs.h"
 
 namespace Gameplay
 {
@@ -8,5 +9,6 @@ namespace Gameplay
 		Scene();
 		virtual ~Scene();
 		virtual void RenderFrame() = 0;
+		virtual void Update(Gameplay::GameTimeDelta timeDelta) = 0;
 	};
 }

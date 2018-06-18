@@ -11,9 +11,11 @@ namespace Graphics
 		DX11Renderer();
 		~DX11Renderer();
 		virtual bool CreateContext(size_t height, size_t width, HWND windowHandle);
+		virtual void Render();
+
+	private:
 		virtual void PreFrameRenderBehaviour();
 		virtual void PostFrameRenderBehaviour();
-	private:
 		IDXGISwapChain1 * _swapChain;
 		ID3D11RenderTargetView * _renderTarget;
 		ID3D11Texture2D * _depthStencilBuffer;

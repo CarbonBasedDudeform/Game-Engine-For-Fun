@@ -18,10 +18,10 @@
     <ClInclude Include="Window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="IRenderer.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="DX11Renderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
