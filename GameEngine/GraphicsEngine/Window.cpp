@@ -46,16 +46,9 @@ namespace Graphics
 		Create(title, height, width);
 	}
 
-
-	Window::~Window()
-	{
-	}
-
-	void Window::Update(const Graphics::RenderFunc&& renderFrame, const UpdateFunc&& updateFunc)
-	{
+	void Window::Loop() {
 		MSG msg;
 		ZeroMemory(&msg, sizeof(msg));
-		_renderer->SetRenderFunc(std::move(renderFrame));
 
 		while (msg.message != WM_QUIT)
 		{
@@ -63,12 +56,23 @@ namespace Graphics
 			{
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
-			} 
+			}
 			else
 			{
-				updateFunc();
+				_updateFunc();
 				_renderer->Render();
 			}
 		}
+	}
+
+
+	Window::~Window()
+	{
+	}
+
+	void Window::Update(const Graphics::RenderFunc&& renderFrame, const UpdateFunc&& updateFunc)
+	{
+		_updateFunc = std::move(updateFunc);
+		_renderer->SetRenderFunc(std::move(renderFrame));
 	}
 }

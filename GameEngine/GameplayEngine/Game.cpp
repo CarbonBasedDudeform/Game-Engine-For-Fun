@@ -39,6 +39,9 @@ namespace Gameplay
 			_curScene->Update(deltaTime);
 			_lastUpdateTime = currentTime;
 		});
+
+		std::thread renderThread(&Graphics::Window::Loop, _window.get());
+		renderThread.join();
 	}
 	void Game::SetScene(std::unique_ptr<Gameplay::Scene> scene)
 	{
