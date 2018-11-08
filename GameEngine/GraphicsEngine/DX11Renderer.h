@@ -2,6 +2,8 @@
 #include "IRenderer.h"
 #include <dxgi1_2.h>
 #include <D3D11.h>
+#include <memory>
+#include <wrl/client.h>
 
 namespace Graphics
 {
@@ -16,9 +18,6 @@ namespace Graphics
 	private:
 		virtual void PreFrameRenderBehaviour();
 		virtual void PostFrameRenderBehaviour();
-		IDXGISwapChain1 * _swapChain;
-		ID3D11RenderTargetView * _renderTarget;
-		ID3D11Texture2D * _depthStencilBuffer;
-		ID3D11DepthStencilView * _depthStencilView;
+		Microsoft::WRL::ComPtr<IDXGISwapChain1> _swapChain;
 	};
 }

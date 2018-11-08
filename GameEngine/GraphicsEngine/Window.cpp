@@ -4,19 +4,20 @@
 namespace Graphics
 {
 	void Window::Create(std::string & title, size_t height, size_t width)
-	{
-		ZeroMemory(&_window, sizeof(_window));
-		_window.cbSize = sizeof(WNDCLASSEX);
-		_window.style = CS_CLASSDC;
-		_window.lpfnWndProc = WndProc;
-		_window.hInstance = _instance;
-		_window.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
-		_window.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
-		_window.hCursor = LoadCursor(nullptr, IDC_ARROW);
-		_window.hbrBackground = GetSysColorBrush(COLOR_BTNFACE);
-		_window.lpszClassName = title.c_str();
-		
-		RegisterClassEx(&_window);
+	{	
+		WNDCLASSEX window;
+		ZeroMemory(&window, sizeof(window));
+		window.cbSize = sizeof(WNDCLASSEX);
+		window.style = CS_CLASSDC;
+		window.lpfnWndProc = WndProc;
+		window.hInstance = _instance;
+		window.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
+		window.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
+		window.hCursor = LoadCursor(nullptr, IDC_ARROW);
+		window.hbrBackground = GetSysColorBrush(COLOR_BTNFACE);
+		window.lpszClassName = title.c_str();
+
+		RegisterClassEx(&window);
 		_windowHandle = CreateWindow(title.c_str(), title.c_str(), WS_BORDER, 0, 0, width, height, nullptr, nullptr, _instance, nullptr);
 
 		ShowWindow(_windowHandle, SW_SHOW);
@@ -36,7 +37,9 @@ namespace Graphics
 		return DefWindowProc(windowHandle, message, wParam, lParam);
 	}
 
-	Window::Window(std::string& title, size_t height, size_t width, RendererTypes renderType)
+	Window::Window(std::string& title, size_t height, size_t width, RendererTypes renderType) :
+		_instance(0),
+		_windowHandle(nullptr)
 	{
 		switch (renderType)
 		{

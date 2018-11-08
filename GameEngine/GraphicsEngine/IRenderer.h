@@ -15,6 +15,7 @@ namespace Graphics
 	class IRenderer
 	{
 	public:
+		virtual ~IRenderer() = default;
 		virtual bool CreateContext(size_t height, size_t width, HWND windowHandle) = 0;
 		virtual void Render() = 0;
 

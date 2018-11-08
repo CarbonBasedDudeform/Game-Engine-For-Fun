@@ -63,8 +63,8 @@ namespace Graphics
 
 		ID3D11Texture2D* backBuffer;
 		auto res = _swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
-
-		direct3DDevice->CreateRenderTargetView(backBuffer, nullptr, &_renderTarget);
+		ID3D11RenderTargetView * renderTarget;
+		direct3DDevice->CreateRenderTargetView(backBuffer, nullptr, &renderTarget);
 
 		D3D11_TEXTURE2D_DESC depthStencilDesc;
 		ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
@@ -78,8 +78,10 @@ namespace Graphics
 		depthStencilDesc.SampleDesc.Count = 1;
 		depthStencilDesc.SampleDesc.Quality = 0;
 
-		direct3DDevice->CreateTexture2D(&depthStencilDesc, nullptr, &_depthStencilBuffer);
-		direct3DDevice->CreateDepthStencilView(_depthStencilBuffer, nullptr, &_depthStencilView);
+		ID3D11Texture2D * depthStencilBuffer;
+		direct3DDevice->CreateTexture2D(&depthStencilDesc, nullptr,&depthStencilBuffer);
+		ID3D11DepthStencilView * depthStencilView;
+		direct3DDevice->CreateDepthStencilView(depthStencilBuffer, nullptr, &depthStencilView);
 
 		D3D11_VIEWPORT viewport;
 		viewport.TopLeftX = 0;

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2050
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PhysicsEngine", "PhysicsEngine\PhysicsEngine.vcxproj", "{D5C716FC-8F5C-434E-80E4-57174FFD968A}"
 EndProject
@@ -15,6 +15,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DemoApp", "DemoApp\DemoApp.
 		{29684BB9-5948-43C4-BE8D-2D3B3497DF5D} = {29684BB9-5948-43C4-BE8D-2D3B3497DF5D}
 		{C1A53BBC-F564-4C38-8F2F-6DFE94C55EE5} = {C1A53BBC-F564-4C38-8F2F-6DFE94C55EE5}
 		{89CB73C9-1B05-4632-8037-9F1479CAE8AF} = {89CB73C9-1B05-4632-8037-9F1479CAE8AF}
+		{AEBFDEE3-EF46-444A-BB71-48D81EB5640E} = {AEBFDEE3-EF46-444A-BB71-48D81EB5640E}
 		{D5C716FC-8F5C-434E-80E4-57174FFD968A} = {D5C716FC-8F5C-434E-80E4-57174FFD968A}
 	EndProjectSection
 EndProject
@@ -94,5 +95,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EF514A33-29E6-41C6-A8AB-E31974031860}
 	EndGlobalSection
 EndGlobal
