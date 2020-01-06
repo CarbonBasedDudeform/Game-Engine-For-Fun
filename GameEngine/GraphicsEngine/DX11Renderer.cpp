@@ -1,8 +1,7 @@
 #include "DX11Renderer.h"
 #pragma comment(lib, "d3d11.lib")
 
-//#define TINYOBJLOADER_IMPLEMENTATION
-//#include "..\\..\\Externals\tinyobj_loader_opt.h"
+
                                            
 namespace Graphics
 {
