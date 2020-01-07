@@ -1,5 +1,6 @@
 #pragma once
-#define TINYOBJLOADER_IMPLEMENTATION
+#include <vector>
+#include <string>
 #include "..\\..\\Externals\tinyobj_loader_opt.h"
 
 namespace Graphics

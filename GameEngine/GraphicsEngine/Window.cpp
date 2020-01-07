@@ -73,9 +73,9 @@ namespace Graphics
 	{
 	}
 
-	void Window::Update(const Graphics::RenderFunc&& renderFrame, const UpdateFunc&& updateFunc)
+	void Window::Update(Models const& current_scene_models, const UpdateFunc&& updateFunc)
 	{
 		_updateFunc = std::move(updateFunc);
-		_renderer->SetRenderFunc(std::move(renderFrame));
+		_renderer->SetModelsToRender(current_scene_models);
 	}
 }

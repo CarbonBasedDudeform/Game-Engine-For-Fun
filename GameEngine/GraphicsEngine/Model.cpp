@@ -1,6 +1,8 @@
 #include "Model.h"
 
 #include <iostream> //TODO: replace with actual logging service...
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "..\\..\\Externals\tinyobj_loader_opt.h"
 
 namespace Graphics
 {

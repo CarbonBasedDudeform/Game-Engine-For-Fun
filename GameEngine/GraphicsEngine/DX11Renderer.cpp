@@ -111,7 +111,10 @@ namespace Graphics
 	void DX11Renderer::Render()
 	{
 		PreFrameRenderBehaviour();
-		_sceneRenderFunc();
+		for (auto& current_model : sceneModels_)
+		{
+			//render the model...
+		}
 		PostFrameRenderBehaviour();
 	}
 }
