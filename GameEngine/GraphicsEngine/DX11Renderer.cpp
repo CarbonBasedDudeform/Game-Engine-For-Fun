@@ -22,22 +22,22 @@ namespace Graphics
 			D3D_FEATURE_LEVEL_10_0
 		};
 
-		ID3D11Device* direct3DDevice;
+		
 		D3D_FEATURE_LEVEL selectedFeatureLevel;
-		ID3D11DeviceContext* direct3DDeviceContext;
+
 		UINT createDeviceFlags = 0;
 		HRESULT hr;
-		if (FAILED((hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, createDeviceFlags, featureLevels, ARRAYSIZE(featureLevels), D3D11_SDK_VERSION, &direct3DDevice, &selectedFeatureLevel, &direct3DDeviceContext))))
+		if (FAILED((hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, createDeviceFlags, featureLevels, ARRAYSIZE(featureLevels), D3D11_SDK_VERSION, &device_, &selectedFeatureLevel, &context_))))
 		{
 			return false;
 		}
 
 		UINT qualityLevels[1];
-		direct3DDevice->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, 4, qualityLevels);
+		device_->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, 4, qualityLevels);
 
 
 		IDXGIDevice * dxgiDevice;
-		direct3DDevice->QueryInterface(__uuidof(IDXGIDevice), reinterpret_cast<void**>(&dxgiDevice));
+		device_->QueryInterface(__uuidof(IDXGIDevice), reinterpret_cast<void**>(&dxgiDevice));
 		IDXGIAdapter * dxgiAdapter;
 		dxgiDevice->GetParent(__uuidof(IDXGIAdapter), reinterpret_cast<void**>(&dxgiAdapter));
 		IDXGIFactory2 * dxgiFactory;
@@ -66,8 +66,8 @@ namespace Graphics
 		ID3D11Texture2D* backBuffer;
 		auto res = _swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
 		ID3D11RenderTargetView * renderTarget;
-		direct3DDevice->CreateRenderTargetView(backBuffer, nullptr, &renderTarget);
-
+		device_->CreateRenderTargetView(backBuffer, nullptr, &renderTarget);
+		
 		D3D11_TEXTURE2D_DESC depthStencilDesc;
 		ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
 		depthStencilDesc.Width = width;
@@ -81,9 +81,9 @@ namespace Graphics
 		depthStencilDesc.SampleDesc.Quality = 0;
 
 		ID3D11Texture2D * depthStencilBuffer;
-		direct3DDevice->CreateTexture2D(&depthStencilDesc, nullptr,&depthStencilBuffer);
+		device_->CreateTexture2D(&depthStencilDesc, nullptr,&depthStencilBuffer);
 		ID3D11DepthStencilView * depthStencilView;
-		direct3DDevice->CreateDepthStencilView(depthStencilBuffer, nullptr, &depthStencilView);
+		device_->CreateDepthStencilView(depthStencilBuffer, nullptr, &depthStencilView);
 
 		D3D11_VIEWPORT viewport;
 		viewport.TopLeftX = 0;
@@ -93,7 +93,7 @@ namespace Graphics
 		viewport.MinDepth = 0.0f;
 		viewport.MaxDepth = 1.0f;
 
-		direct3DDeviceContext->RSSetViewports(1, &viewport);
+		context_->RSSetViewports(1, &viewport);
 		
 		return true;
 	}
@@ -114,6 +114,7 @@ namespace Graphics
 		for (auto& current_model : sceneModels_)
 		{
 			//render the model...
+
 		}
 		PostFrameRenderBehaviour();
 	}

@@ -19,5 +19,7 @@ namespace Graphics
 		virtual void PreFrameRenderBehaviour();
 		virtual void PostFrameRenderBehaviour();
 		Microsoft::WRL::ComPtr<IDXGISwapChain1> _swapChain;
+		ID3D11Device* device_{};
+		ID3D11DeviceContext* context_{};
 	};
 }
