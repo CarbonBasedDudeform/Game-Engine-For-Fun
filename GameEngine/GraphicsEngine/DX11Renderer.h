@@ -2,6 +2,7 @@
 #include "IRenderer.h"
 #include <dxgi1_2.h>
 #include <D3D11.h>
+#include <d3dcompiler.h>
 #include <memory>
 #include <wrl/client.h>
 
