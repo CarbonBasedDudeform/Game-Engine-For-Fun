@@ -30,9 +30,7 @@ namespace Gameplay
 
 	void Game::Run()
 	{
-		_window->Update([=] { 
-			_curScene->RenderFrame();
-		},
+		_window->Update(_curScene->getModels(),
 			[=] {
 			auto currentTime = _clock.now();
 			auto deltaTime = static_cast<GameTimeDelta>(currentTime - _lastUpdateTime);

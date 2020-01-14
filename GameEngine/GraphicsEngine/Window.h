@@ -6,6 +6,8 @@
 #include <memory>
 
 #include "IRenderer.h"
+#include "Model.h"
+
 #define MAIN int CALLBACK WinMain(__in  HINSTANCE hInstance,__in  HINSTANCE hPrevInstance,__in  LPSTR lpCmdLine,__in  int nCmdShow)
 
 namespace Graphics
@@ -15,7 +17,7 @@ namespace Graphics
 	public:
 		Window(std::string& title, size_t height, size_t width, RendererTypes renderType);
 		virtual ~Window();
-		void Update(const Graphics::RenderFunc&& renderFunc, const UpdateFunc&& updateFunc);
+		void Update(Models const& current_scene_models, const UpdateFunc&& updateFunc);
 		void Loop();
 	private:
 		void Create(std::string& title, size_t height, size_t width);

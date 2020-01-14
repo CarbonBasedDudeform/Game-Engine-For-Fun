@@ -81,3 +81,5 @@ GameEngine/GameplayEngine/x64/Debug/game.nativecodeanalysis.xml
 *.xml
 *.obj
 *.lastbuildstate
+*.sarif
+*.enc
