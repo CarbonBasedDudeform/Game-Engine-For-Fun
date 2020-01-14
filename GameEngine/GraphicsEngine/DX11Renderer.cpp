@@ -1,10 +1,29 @@
 #include "DX11Renderer.h"
-#pragma comment(lib, "d3d11.lib")
+#include <filesystem>   
+#include <iostream> //todo: switch to some non-basic bitch logger
 
-
-                                           
 namespace Graphics
 {
+	ID3DBlob * load_shader_blob(std::filesystem::path const& path_to_cso)
+	{
+		ID3DBlob* shader_blob;
+		D3DReadFileToBlob(path_to_cso.c_str(), &shader_blob);
+		if (!shader_blob)
+		{
+			auto err_msg = std::wstring{ L"Failed to load shader: " };
+			err_msg += path_to_cso.wstring();
+			err_msg += L"\n";
+			OutputDebugStringW(err_msg.c_str());
+		}
+		else
+		{
+			OutputDebugStringW(L"Succesfully loaded default vertex shader.\n");
+			
+		}
+
+		return shader_blob;
+	}
+
 	DX11Renderer::DX11Renderer()
 	{
 	}
@@ -95,6 +114,9 @@ namespace Graphics
 
 		context_->RSSetViewports(1, &viewport);
 		
+		ID3DBlob* vertex_shader_blob = load_shader_blob(L"DefaultVertexShaderDx11.cso");
+		ID3DBlob* pixel_shader_blob = load_shader_blob(L"DefaultPixelShaderDx11.cso");
+
 		return true;
 	}
 
