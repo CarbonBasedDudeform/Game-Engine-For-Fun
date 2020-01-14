@@ -1,10 +1,13 @@
 #pragma once
 #include "IRenderer.h"
+
+#pragma warning(push, 0) //disable warnings for external headers
 #include <dxgi1_2.h>
 #include <D3D11.h>
 #include <d3dcompiler.h>
 #include <memory>
 #include <wrl/client.h>
+#pragma warning(pop) //enable warnings again
 
 namespace Graphics
 {
@@ -16,10 +19,12 @@ namespace Graphics
 		virtual bool CreateContext(size_t height, size_t width, HWND windowHandle);
 		virtual void Render();
 
-	private:
+	protected:
 		virtual void PreFrameRenderBehaviour();
 		virtual void PostFrameRenderBehaviour();
-		Microsoft::WRL::ComPtr<IDXGISwapChain1> _swapChain;
+
+	private:
+		Microsoft::WRL::ComPtr<IDXGISwapChain1> swap_chain_;
 		ID3D11Device* device_{};
 		ID3D11DeviceContext* context_{};
 	};

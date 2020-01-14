@@ -1,6 +1,9 @@
 #include "DX11Renderer.h"
+
+#pragma warning(push, 0) //disable warnings for external headers
 #include <filesystem>   
 #include <iostream> //todo: switch to some non-basic bitch logger
+#pragma warning(pop) //enable warnings again
 
 namespace Graphics
 {
@@ -18,7 +21,6 @@ namespace Graphics
 		else
 		{
 			OutputDebugStringW(L"Succesfully loaded default vertex shader.\n");
-			
 		}
 
 		return shader_blob;
@@ -80,10 +82,10 @@ namespace Graphics
 		fullScreenDesc.Windowed = true;
 
 		
-		auto blep = dxgiFactory->CreateSwapChainForHwnd(dxgiDevice, windowHandle, &swapChainDesc, &fullScreenDesc, nullptr, &_swapChain);
+		auto blep = dxgiFactory->CreateSwapChainForHwnd(dxgiDevice, windowHandle, &swapChainDesc, &fullScreenDesc, nullptr, &swap_chain_);
 
 		ID3D11Texture2D* backBuffer;
-		auto res = _swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
+		auto res = swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
 		ID3D11RenderTargetView * renderTarget;
 		device_->CreateRenderTargetView(backBuffer, nullptr, &renderTarget);
 		
@@ -114,8 +116,8 @@ namespace Graphics
 
 		context_->RSSetViewports(1, &viewport);
 		
-		ID3DBlob* vertex_shader_blob = load_shader_blob(L"DefaultVertexShaderDx11.cso");
-		ID3DBlob* pixel_shader_blob = load_shader_blob(L"DefaultPixelShaderDx11.cso");
+		std::unique_ptr<ID3DBlob> vertex_shader_blob{ load_shader_blob(L"DefaultVertexShaderDx11.cso") };
+		std::unique_ptr<ID3DBlob> pixel_shader_blob{ load_shader_blob(L"DefaultPixelShaderDx11.cso") };
 
 		return true;
 	}
@@ -127,13 +129,13 @@ namespace Graphics
 
 	void DX11Renderer::PostFrameRenderBehaviour()
 	{
-		_swapChain->Present(0, 0);
+		swap_chain_->Present(0, 0);
 	}
 
 	void DX11Renderer::Render()
 	{
 		PreFrameRenderBehaviour();
-		for (auto& current_model : sceneModels_)
+		for (auto& current_model : scene_models_)
 		{
 			//render the model...
 

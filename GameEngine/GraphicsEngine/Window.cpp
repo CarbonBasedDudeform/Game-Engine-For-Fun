@@ -10,7 +10,7 @@ namespace Graphics
 		window.cbSize = sizeof(WNDCLASSEX);
 		window.style = CS_CLASSDC;
 		window.lpfnWndProc = WndProc;
-		window.hInstance = _instance;
+		window.hInstance = instance_;
 		window.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
 		window.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
 		window.hCursor = LoadCursor(nullptr, IDC_ARROW);
@@ -18,11 +18,11 @@ namespace Graphics
 		window.lpszClassName = title.c_str();
 
 		RegisterClassEx(&window);
-		_windowHandle = CreateWindow(title.c_str(), title.c_str(), WS_BORDER, 0, 0, width, height, nullptr, nullptr, _instance, nullptr);
+		window_handle_ = CreateWindow(title.c_str(), title.c_str(), WS_BORDER, 0, 0, width, height, nullptr, nullptr, instance_, nullptr);
 
-		ShowWindow(_windowHandle, SW_SHOW);
-		UpdateWindow(_windowHandle);		
-		_renderer->CreateContext(height, width, _windowHandle);
+		ShowWindow(window_handle_, SW_SHOW);
+		UpdateWindow(window_handle_);
+		renderer_->CreateContext(height, width, window_handle_);
 	}
 
 	LRESULT Window::WndProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam)
@@ -37,14 +37,12 @@ namespace Graphics
 		return DefWindowProc(windowHandle, message, wParam, lParam);
 	}
 
-	Window::Window(std::string& title, size_t height, size_t width, RendererTypes renderType) :
-		_instance(0),
-		_windowHandle(nullptr)
+	Window::Window(std::string& title, size_t height, size_t width, RendererTypes renderType)
 	{
 		switch (renderType)
 		{
 		case RendererTypes::DX11:
-			_renderer = std::make_unique<DX11Renderer>();
+			renderer_ = std::make_unique<DX11Renderer>();
 		}
 		Create(title, height, width);
 	}
@@ -62,20 +60,15 @@ namespace Graphics
 			}
 			else
 			{
-				_updateFunc();
-				_renderer->Render();
+				update_func_();
+				renderer_->Render();
 			}
 		}
 	}
 
-
-	Window::~Window()
-	{
-	}
-
 	void Window::Update(Models const& current_scene_models, const UpdateFunc&& updateFunc)
 	{
-		_updateFunc = std::move(updateFunc);
-		_renderer->SetModelsToRender(current_scene_models);
+		update_func_ = std::move(updateFunc);
+		renderer_->SetModelsToRender(current_scene_models);
 	}
 }

@@ -1,7 +1,10 @@
 #pragma once
+#include "Model.h"
+
+#pragma warning(push, 0) //disable warnings for external headers
 #include <Windows.h>
 #include <functional>
-#include "Model.h"
+#pragma warning(pop)
 
 namespace Graphics
 {
@@ -21,12 +24,14 @@ namespace Graphics
 		virtual void Render() = 0;
 
 		void SetModelsToRender(Models const& models) {
-			sceneModels_ = models;
+			scene_models_ = models;
 		}
 
 	protected:
 		virtual void PreFrameRenderBehaviour() = 0;
 		virtual void PostFrameRenderBehaviour() = 0;
-		Models sceneModels_{};
+	
+	protected:
+		Models scene_models_{};
 	};
 }
