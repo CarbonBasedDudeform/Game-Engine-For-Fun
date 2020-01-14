@@ -1,8 +1,13 @@
 #include "Model.h"
 
+#pragma warning(push, 0) //disable warnings for external headers
+
+
 #include <iostream> //TODO: replace with actual logging service...
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "..\\..\\Externals\tinyobj_loader_opt.h"
+
+#pragma warning(pop)
 
 namespace Graphics
 {

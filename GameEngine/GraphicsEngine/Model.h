@@ -1,7 +1,10 @@
 #pragma once
+
+#pragma warning(push, 0) //disable warnings for external headers
 #include <vector>
 #include <string>
 #include "..\\..\\Externals\tinyobj_loader_opt.h"
+#pragma warning(pop)
 
 namespace Graphics
 {

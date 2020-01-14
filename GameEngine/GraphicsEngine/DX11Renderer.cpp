@@ -1,6 +1,9 @@
 #include "DX11Renderer.h"
+
+#pragma warning(push, 0) //disable warnings for external headers
 #include <filesystem>   
 #include <iostream> //todo: switch to some non-basic bitch logger
+#pragma warning(pop) //enable warnings again
 
 namespace Graphics
 {
@@ -18,35 +21,25 @@ namespace Graphics
 		else
 		{
 			OutputDebugStringW(L"Succesfully loaded default vertex shader.\n");
-			
 		}
 
 		return shader_blob;
 	}
 
-	DX11Renderer::DX11Renderer()
-	{
-	}
-
-
-	DX11Renderer::~DX11Renderer()
-	{
-	}
-
 	bool DX11Renderer::CreateContext(size_t height, size_t width, HWND windowHandle)
 	{
-		D3D_FEATURE_LEVEL featureLevels[] = {
+		D3D_FEATURE_LEVEL  const featureLevels[] = {
 			D3D_FEATURE_LEVEL_11_0,
 			D3D_FEATURE_LEVEL_10_1,
 			D3D_FEATURE_LEVEL_10_0
 		};
 
 		
-		D3D_FEATURE_LEVEL selectedFeatureLevel;
+		D3D_FEATURE_LEVEL selectedFeatureLevel{};
 
-		UINT createDeviceFlags = 0;
+		UINT const createDeviceFlags = 0;
 		HRESULT hr;
-		if (FAILED((hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, createDeviceFlags, featureLevels, ARRAYSIZE(featureLevels), D3D11_SDK_VERSION, &device_, &selectedFeatureLevel, &context_))))
+		if (FAILED((hr = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, featureLevels, ARRAYSIZE(featureLevels), D3D11_SDK_VERSION, &device_, &selectedFeatureLevel, &context_))))
 		{
 			return false;
 		}
@@ -57,10 +50,24 @@ namespace Graphics
 
 		IDXGIDevice * dxgiDevice;
 		device_->QueryInterface(__uuidof(IDXGIDevice), reinterpret_cast<void**>(&dxgiDevice));
+		if (!dxgiDevice)
+		{
+			return false;
+		}
+
 		IDXGIAdapter * dxgiAdapter;
 		dxgiDevice->GetParent(__uuidof(IDXGIAdapter), reinterpret_cast<void**>(&dxgiAdapter));
+		if (!dxgiAdapter)
+		{
+			return false;
+		}
+
 		IDXGIFactory2 * dxgiFactory;
 		dxgiAdapter->GetParent(__uuidof(IDXGIFactory2), reinterpret_cast<void**>(&dxgiFactory));
+		if (!dxgiFactory)
+		{
+			return false;
+		}
 
 		DXGI_SWAP_CHAIN_DESC1 swapChainDesc;
 		ZeroMemory(&swapChainDesc, sizeof(swapChainDesc));
@@ -80,10 +87,10 @@ namespace Graphics
 		fullScreenDesc.Windowed = true;
 
 		
-		auto blep = dxgiFactory->CreateSwapChainForHwnd(dxgiDevice, windowHandle, &swapChainDesc, &fullScreenDesc, nullptr, &_swapChain);
+		dxgiFactory->CreateSwapChainForHwnd(dxgiDevice, windowHandle, &swapChainDesc, &fullScreenDesc, nullptr, &swap_chain_);
 
 		ID3D11Texture2D* backBuffer;
-		auto res = _swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
+		swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer));
 		ID3D11RenderTargetView * renderTarget;
 		device_->CreateRenderTargetView(backBuffer, nullptr, &renderTarget);
 		
@@ -114,8 +121,8 @@ namespace Graphics
 
 		context_->RSSetViewports(1, &viewport);
 		
-		ID3DBlob* vertex_shader_blob = load_shader_blob(L"DefaultVertexShaderDx11.cso");
-		ID3DBlob* pixel_shader_blob = load_shader_blob(L"DefaultPixelShaderDx11.cso");
+		std::unique_ptr<ID3DBlob> vertex_shader_blob{ load_shader_blob(L"DefaultVertexShaderDx11.cso") };
+		std::unique_ptr<ID3DBlob> pixel_shader_blob{ load_shader_blob(L"DefaultPixelShaderDx11.cso") };
 
 		return true;
 	}
@@ -127,13 +134,13 @@ namespace Graphics
 
 	void DX11Renderer::PostFrameRenderBehaviour()
 	{
-		_swapChain->Present(0, 0);
+		swap_chain_->Present(0, 0);
 	}
 
 	void DX11Renderer::Render()
 	{
 		PreFrameRenderBehaviour();
-		for (auto& current_model : sceneModels_)
+		for (auto& current_model : scene_models_)
 		{
 			//render the model...
 
