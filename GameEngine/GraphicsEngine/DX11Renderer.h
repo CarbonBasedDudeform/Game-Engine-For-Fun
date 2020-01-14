@@ -11,20 +11,20 @@
 
 namespace Graphics
 {
-	class DX11Renderer : public IRenderer
+	class DX11Renderer final : public IRenderer 
 	{
 	public:
-		DX11Renderer();
-		~DX11Renderer();
-		virtual bool CreateContext(size_t height, size_t width, HWND windowHandle);
-		virtual void Render();
+		DX11Renderer() noexcept = default;
+
+		virtual bool CreateContext(size_t height, size_t width, HWND windowHandle) final;
+		virtual void Render() final;
 
 	protected:
-		virtual void PreFrameRenderBehaviour();
-		virtual void PostFrameRenderBehaviour();
+		virtual void PreFrameRenderBehaviour() final;
+		virtual void PostFrameRenderBehaviour() final;
 
 	private:
-		Microsoft::WRL::ComPtr<IDXGISwapChain1> swap_chain_;
+		Microsoft::WRL::ComPtr<IDXGISwapChain1> swap_chain_{};
 		ID3D11Device* device_{};
 		ID3D11DeviceContext* context_{};
 	};

@@ -19,7 +19,13 @@ namespace Graphics
 	class IRenderer
 	{
 	public:
+		IRenderer() = default;
 		virtual ~IRenderer() = default;
+		IRenderer(IRenderer const&) = default;
+		IRenderer(IRenderer&&) noexcept = default;
+		IRenderer& operator=(IRenderer const&) = default;
+		IRenderer& operator=(IRenderer&&) noexcept = default;
+
 		virtual bool CreateContext(size_t height, size_t width, HWND windowHandle) = 0;
 		virtual void Render() = 0;
 

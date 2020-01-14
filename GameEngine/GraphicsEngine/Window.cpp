@@ -3,7 +3,7 @@
 
 namespace Graphics
 {
-	void Window::Create(std::string & title, size_t height, size_t width)
+	void Window::Create(std::string const& title, size_t height, size_t width)
 	{	
 		WNDCLASSEX window;
 		ZeroMemory(&window, sizeof(window));
@@ -66,7 +66,7 @@ namespace Graphics
 		}
 	}
 
-	void Window::Update(Models const& current_scene_models, const UpdateFunc&& updateFunc)
+	void Window::Update(Models const& current_scene_models, UpdateFunc const&& updateFunc)
 	{
 		update_func_ = std::move(updateFunc);
 		renderer_->SetModelsToRender(current_scene_models);

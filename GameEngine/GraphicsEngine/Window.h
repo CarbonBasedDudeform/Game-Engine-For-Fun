@@ -15,22 +15,21 @@
 
 namespace Graphics
 {
-	class Window
+	class Window final
 	{
 	public:
 		Window(std::string& title, size_t height, size_t width, RendererTypes renderType);
-		virtual ~Window() = default;
 
-		void Update(Models const& current_scene_models, const UpdateFunc&& updateFunc);
+		void Update(Models const& current_scene_models, UpdateFunc const&& updateFunc);
 		void Loop();
+
 	private:
-		void Create(std::string& title, size_t height, size_t width);
+		void Create(std::string const& title, size_t height, size_t width);
 		static LRESULT WINAPI WndProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
 
 	private:
 		HINSTANCE instance_{};
 		HWND window_handle_{};
-		
 		 
 		std::unique_ptr<IRenderer> renderer_;
 		UpdateFunc update_func_{};
