@@ -58,7 +58,7 @@ namespace Graphics
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
-			else
+			
 			{
 				update_func_();
 				renderer_->Render();
