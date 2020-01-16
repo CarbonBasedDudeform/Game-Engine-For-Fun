@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include "..\\..\\Externals\tinyobj_loader_opt.h"
+#include <filesystem>
 #pragma warning(pop)
 
 namespace Graphics
@@ -17,7 +18,7 @@ namespace Graphics
 		using Materials = std::vector<Material>;
 		using Attribute = tinyobj::attrib_t;
 
-		Model(std::string const& filename);
+		Model(std::filesystem::path const& filename);
 
 		bool isOk() const;
 		Shapes getShapes() const;

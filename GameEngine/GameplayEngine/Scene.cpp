@@ -11,7 +11,7 @@ namespace Gameplay
 	{
 	}
 
-	bool Scene::AddModel(std::string const& path_to_model)
+	bool Scene::AddModel(std::filesystem::path const& path_to_model)
 	{
 		auto new_model = Graphics::Model{ path_to_model };
 		if (!new_model.isOk())

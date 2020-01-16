@@ -11,12 +11,12 @@
 
 namespace Graphics
 {
-	Model::Model(std::string const& filename)
+	Model::Model(std::filesystem::path const& filename)
 	{
 		std::string warn;
 		std::string err;
 
-		loaded_okay_ = tinyobj::LoadObj(&attribute_, &shapes_, &materials_, &warn, &err, filename.c_str());
+		loaded_okay_ = tinyobj::LoadObj(&attribute_, &shapes_, &materials_, &warn, &err, filename.string().c_str());
 
 		if (!warn.empty()) {
 			std::cout << warn << std::endl;

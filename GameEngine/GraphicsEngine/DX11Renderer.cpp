@@ -106,14 +106,14 @@ namespace Graphics
 		viewport.TopLeftY = 0;
 		viewport.Width = static_cast<float>(width);
 		viewport.Height = static_cast<float>(height);
-		//viewport.MinDepth = 0.0f;
-		//viewport.MaxDepth = 1.0f;
+		viewport.MinDepth = 0.0f;
+		viewport.MaxDepth = 1.0f;
 
 		context_->RSSetViewports(1, &viewport);
-		
+
+		//set up shaders
 		ID3DBlob* vertex_shader_blob = load_shader_blob(L"DefaultVertexShaderDx11.cso");
 		ID3DBlob* pixel_shader_blob = load_shader_blob(L"DefaultPixelShaderDx11.cso");
-
 		
 		device_->CreateVertexShader(vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), nullptr, &vertex_shader_);
 		device_->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), nullptr, &pixel_shader_);
@@ -122,32 +122,35 @@ namespace Graphics
 		context_->PSSetShader(pixel_shader_, nullptr, 0);
 
 		//set up input layout
-
 		ID3D11InputLayout* input_layout;
 		D3D11_INPUT_ELEMENT_DESC input_desc[] =
 		{
 			{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-			{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
 		};
-
-		device_->CreateInputLayout(input_desc, 2, vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout);
+		
+		device_->CreateInputLayout(input_desc, 1, vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout);
 		context_->IASetInputLayout(input_layout);
 
 
-		//set up vertex buffer
+		//create vertex buffer
 		D3D11_BUFFER_DESC buffer_desc;
 		ZeroMemory(&buffer_desc, sizeof(buffer_desc));
 		buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-		buffer_desc.ByteWidth = sizeof(Vertex) * 3;
+		buffer_desc.ByteWidth = sizeof(tinyobj::real_t) * 800000;
 		buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 		buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
 		device_->CreateBuffer(&buffer_desc, nullptr, &vertices_buffer_);
-		
-		D3D11_MAPPED_SUBRESOURCE mapped_subresource;
-		context_->Map(vertices_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
-		memcpy(mapped_subresource.pData, OurVertices, sizeof(OurVertices));
-		context_->Unmap(vertices_buffer_, 0);
+
+		//create index buffer
+		D3D11_BUFFER_DESC index_buffer_desc;
+		ZeroMemory(&index_buffer_desc, sizeof(index_buffer_desc));
+		index_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+		index_buffer_desc.ByteWidth = sizeof(int) * 800000;
+		index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+		index_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+		device_->CreateBuffer(&index_buffer_desc, nullptr, &index_buffer_);
 
 		return true;
 	}
@@ -163,20 +166,64 @@ namespace Graphics
 		swap_chain_->Present(0, 0);
 	}
 
+	void DX11Renderer::SetModelsToRender(Models const& models)
+	{
+		IRenderer::SetModelsToRender(models);
+
+		//if there is nothing, then bye bye
+		if (models.empty()) return;
+
+		auto vertices = std::vector<tinyobj::real_t>{};
+		//map indices to index buffer
+		{
+			D3D11_MAPPED_SUBRESOURCE mapped_subresource;
+			context_->Map(index_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
+
+			std::vector<int> temp;
+			for (auto& idx : models.at(0).getShapes())
+			{
+				for (auto& index : idx.mesh.indices)
+				{
+					temp.push_back(index.vertex_index);
+					vertices.push_back(models.at(0).getAttribute().vertices.at(3*index.vertex_index + 0));
+					vertices.push_back(models.at(0).getAttribute().vertices.at(3*index.vertex_index + 1));
+					vertices.push_back(models.at(0).getAttribute().vertices.at(3*index.vertex_index + 2));
+				}
+			}
+
+			index_count_ = temp.size();
+			memcpy(mapped_subresource.pData, temp.data(), sizeof(int) * index_count_);
+
+			context_->Unmap(index_buffer_, 0);
+		}
+
+		//map vertices to vertex buffer
+		{
+			D3D11_MAPPED_SUBRESOURCE mapped_subresource;
+			context_->Map(vertices_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
+
+			//auto const vertex_count = sizeof(tinyobj::real_t) * models.at(0).getAttribute().vertices.size();
+			//memcpy(mapped_subresource.pData, models.at(0).getAttribute().vertices.data(), vertex_count);
+			auto const vertex_count = sizeof(tinyobj::real_t) * vertices.size();
+			memcpy(mapped_subresource.pData, vertices.data(), vertex_count);
+			context_->Unmap(vertices_buffer_, 0);
+		}
+
+		
+		
+		auto const stride = UINT{ sizeof(tinyobj::real_t) };
+		auto const offset = UINT{ 0 };
+		context_->IASetVertexBuffers(0, 1, &vertices_buffer_, &stride, &offset);
+		context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
+		context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	}
+
 	void DX11Renderer::Render()
 	{
 		PreFrameRenderBehaviour();
-		auto const stride = UINT{ sizeof(Vertex) };
-		auto const offset = UINT{ 0 };
-		context_->IASetVertexBuffers(0, 1, &vertices_buffer_, &stride, &offset);
-		context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		context_->Draw(3, 0);
 
-		//for (auto& current_model : scene_models_)
-		{
-			//render the model...
+		context_->DrawIndexed(index_count_, 0, 0);
 
-		}
 		PostFrameRenderBehaviour();
 	}
 }

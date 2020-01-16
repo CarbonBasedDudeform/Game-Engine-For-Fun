@@ -16,19 +16,19 @@ namespace Graphics
 	//	float r, g, b, a;
 	//};
 
-	using Color = float[4];
-	struct Vertex //todo: switch to directXMath and get dem SIMD benz
-	{
-		float x, y, z;
-		Color color;
-	};
-
-	static Vertex OurVertices[] =
-	{
-		{0.0f, 0.5f, 0.5f, {1.0f, 0.0f, 0.0f, 1.0f}},
-		{0.45f, -0.5, 0.5f, {0.0f, 1.0f, 0.0f, 1.0f}},
-		{-0.45f, -0.5f, 0.5f, {0.0f, 0.0f, 1.0f, 1.0f}}
-	};
+	//using Color = float[4];
+	//struct Vertex //todo: switch to directXMath and get dem SIMD benz
+	//{
+	//	float x, y, z;
+	//	Color color;
+	//};
+	//
+	//static Vertex OurVertices[] =
+	//{
+	//	{0.0f, 0.5f, 0.5f, {1.0f, 0.0f, 0.0f, 1.0f}},
+	//	{0.45f, -0.5, 0.5f, {0.0f, 1.0f, 0.0f, 1.0f}},
+	//	{-0.45f, -0.5f, 0.5f, {0.0f, 0.0f, 1.0f, 1.0f}}
+	//};
 
 	class DX11Renderer final : public IRenderer 
 	{
@@ -41,6 +41,7 @@ namespace Graphics
 	protected:
 		virtual void PreFrameRenderBehaviour() final;
 		virtual void PostFrameRenderBehaviour() final;
+		virtual void SetModelsToRender(Models const& models) final;
 
 	private:
 		
@@ -50,6 +51,9 @@ namespace Graphics
 		ID3D11DeviceContext* context_{};
 		ID3D11VertexShader* vertex_shader_{};
 		ID3D11Buffer* vertices_buffer_{};
+
+		ID3D11Buffer* index_buffer_{};
+		UINT index_count_{};
 
 		ID3D11PixelShader* pixel_shader_{};
 
