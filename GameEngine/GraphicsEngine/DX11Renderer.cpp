@@ -122,35 +122,63 @@ namespace Graphics
 		context_->PSSetShader(pixel_shader_, nullptr, 0);
 
 		//set up input layout
-		ID3D11InputLayout* input_layout;
+		//ID3D11InputLayout* input_layout;
+		//D3D11_INPUT_ELEMENT_DESC input_desc[] =
+		//{
+		//	{L"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		//};
+		//
+		//device_->CreateInputLayout(input_desc, 1, vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout);
+		//context_->IASetInputLayout(input_layout);
+
+		
 		D3D11_INPUT_ELEMENT_DESC input_desc[] =
 		{
 			{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
 		};
-		
+
 		device_->CreateInputLayout(input_desc, 1, vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout);
-		context_->IASetInputLayout(input_layout);
 
 
-		//create vertex buffer
-		D3D11_BUFFER_DESC buffer_desc;
-		ZeroMemory(&buffer_desc, sizeof(buffer_desc));
-		buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-		buffer_desc.ByteWidth = sizeof(tinyobj::real_t) * 800000;
-		buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		////create vertex buffer
+		//D3D11_BUFFER_DESC buffer_desc;
+		//ZeroMemory(&buffer_desc, sizeof(buffer_desc));
+		//buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+		//buffer_desc.ByteWidth = sizeof(Vertex) * 24000;
+		//buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		//buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		//
+		//device_->CreateBuffer(&buffer_desc, nullptr, &vertices_buffer_);
+		//
+		////create index buffer
+		//D3D11_BUFFER_DESC index_buffer_desc;
+		//ZeroMemory(&index_buffer_desc, sizeof(index_buffer_desc));
+		//index_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+		//index_buffer_desc.ByteWidth = sizeof(int) * 80000;
+		//index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+		//index_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		//
+		//device_->CreateBuffer(&index_buffer_desc, nullptr, &index_buffer_);
 
-		device_->CreateBuffer(&buffer_desc, nullptr, &vertices_buffer_);
 
-		//create index buffer
-		D3D11_BUFFER_DESC index_buffer_desc;
-		ZeroMemory(&index_buffer_desc, sizeof(index_buffer_desc));
-		index_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-		index_buffer_desc.ByteWidth = sizeof(int) * 800000;
-		index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		index_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		//set raster state
+		D3D11_RASTERIZER_DESC raster_desc;
+		ZeroMemory(&raster_desc, sizeof(raster_desc));
+		raster_desc.CullMode = D3D11_CULL_BACK;
+		//raster_desc.DepthClipEnable = true;
+		raster_desc.FrontCounterClockwise = true;
+		raster_desc.FillMode = D3D11_FILL_SOLID;
+		
+		ID3D11RasterizerState* raster_state;
+		device_->CreateRasterizerState(&raster_desc, &raster_state);
+		context_->RSSetState(raster_state);
 
-		device_->CreateBuffer(&index_buffer_desc, nullptr, &index_buffer_);
+
+		//auto const stride = UINT{ sizeof(Vertex) };
+		//auto const offset = UINT{ 0 };
+		//context_->IASetVertexBuffers(0, 1, &vertices_buffer_, &stride, &offset);
+		//context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
+		//context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		return true;
 	}
@@ -173,57 +201,107 @@ namespace Graphics
 		//if there is nothing, then bye bye
 		if (models.empty()) return;
 
-		auto vertices = std::vector<tinyobj::real_t>{};
-		//map indices to index buffer
-		{
-			D3D11_MAPPED_SUBRESOURCE mapped_subresource;
-			context_->Map(index_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
+		//auto vertices = 
+		//auto temp = models.at(0).getIndices();
+		//index_count_ = temp.size();
 
-			std::vector<int> temp;
-			for (auto& idx : models.at(0).getShapes())
-			{
-				for (auto& index : idx.mesh.indices)
-				{
-					temp.push_back(index.vertex_index);
-					vertices.push_back(models.at(0).getAttribute().vertices.at(3*index.vertex_index + 0));
-					vertices.push_back(models.at(0).getAttribute().vertices.at(3*index.vertex_index + 1));
-					vertices.push_back(models.at(0).getAttribute().vertices.at(3*index.vertex_index + 2));
-				}
-			}
+		////map indices to index buffer
+		//{
+		//	//D3D11_MAPPED_SUBRESOURCE mapped_subresource;
+		//	//context_->Map(index_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
+		//
+		//auto temp = std::vector<int>{};
+			///for (auto& idx : models.at(0).getShapes())
+			//
+		//auto v_temp = models.at(0).getVertices();
+		////vertices = v_temp;
+		//		for (auto& index : models.at(0).getIndices())
+		//		{
+		//			temp.push_back(temp.size());
+		//	
+		//			vertices.push_back(models.at(0).getVertices()[index]);
+		//			//vertices.push_back(models.at(0).getVertices()[3 * (int)index+ 1]);
+		//			//vertices.push_back(models.at(0).getVertices()[3 * (int)index+ 2]);
+		//		}
+		//	
 
-			index_count_ = temp.size();
-			memcpy(mapped_subresource.pData, temp.data(), sizeof(int) * index_count_);
+			auto temp = models.at(0).getIndices();
+			vertices = models.at(0).getVertices();
+			//index_count_ = vertices.size();
+		//
+			index_count_ = *(std::max_element(temp.begin(), temp.end()));//whatever i do what i want //temp.size();// sizeof(temp[0]);// *sizeof(int);
+		//	//memcpy(mapped_subresource.pData, temp.data(), sizeof(int) * temp.size());
+		//
+		//	//context_->Unmap(index_buffer_, 0);
+		//}
+		////
+		////map vertices to vertex buffer
+		//{
+		//	vertices = models.at(0).getAttribute().vertices;
+		//	//D3D11_MAPPED_SUBRESOURCE mapped_subresource;
+		////	context_->Map(vertices_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
+		//
+		//	//auto const vertex_count =  vertices.size(); // * sizeof(Vertex);
+		//	//index_count_ = vertices.size();// *sizeof(tinyobj::real_t);
+		//	//memcpy(mapped_subresource.pData, vertices.data(), vertex_count);
+		//
+		//	//context_->Unmap(vertices_buffer_, 0);
+		//}
+		//
+		//
+		//
+		//auto const stride = UINT{ sizeof(Vertex)};
+		//auto const offset = UINT{ 0 };
+		//context_->IASetVertexBuffers(0, 1, &vertices_buffer_, &stride, &offset);
+		//context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
+		//context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-			context_->Unmap(index_buffer_, 0);
-		}
+		//vertices = models.at(0).getVertices();
+		//create vertex buffer
 
-		//map vertices to vertex buffer
-		{
-			D3D11_MAPPED_SUBRESOURCE mapped_subresource;
-			context_->Map(vertices_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
+		D3D11_SUBRESOURCE_DATA vertex_buffer_sub_resource;
+		vertex_buffer_sub_resource.pSysMem = vertices.data();
 
-			//auto const vertex_count = sizeof(tinyobj::real_t) * models.at(0).getAttribute().vertices.size();
-			//memcpy(mapped_subresource.pData, models.at(0).getAttribute().vertices.data(), vertex_count);
-			auto const vertex_count = sizeof(tinyobj::real_t) * vertices.size();
-			memcpy(mapped_subresource.pData, vertices.data(), vertex_count);
-			context_->Unmap(vertices_buffer_, 0);
-		}
+		D3D11_BUFFER_DESC buffer_desc;
+		ZeroMemory(&buffer_desc, sizeof(buffer_desc));
+		buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+		buffer_desc.ByteWidth = sizeof(Vertex) * vertices.size();
+		buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-		
-		
-		auto const stride = UINT{ sizeof(tinyobj::real_t) };
+		device_->CreateBuffer(&buffer_desc, &vertex_buffer_sub_resource, &vertices_buffer_);
+
+		//create index buffer
+
+		D3D11_SUBRESOURCE_DATA index_buffer_sub_resource;
+		index_buffer_sub_resource.pSysMem = temp.data();
+
+		D3D11_BUFFER_DESC index_buffer_desc;
+		ZeroMemory(&index_buffer_desc, sizeof(index_buffer_desc));
+		index_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+		index_buffer_desc.ByteWidth = sizeof(temp[0]) * index_count_;
+		index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+		index_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+		device_->CreateBuffer(&index_buffer_desc, &index_buffer_sub_resource, &index_buffer_);
+
+		auto const stride = UINT{ sizeof(Vertex) };
 		auto const offset = UINT{ 0 };
 		context_->IASetVertexBuffers(0, 1, &vertices_buffer_, &stride, &offset);
 		context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
 		context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		
+		//context_->IASetInputLayout(input_layout);
 	}
 
 	void DX11Renderer::Render()
 	{
 		PreFrameRenderBehaviour();
 
+		//context_->Draw(index_count_, 0);
 		context_->DrawIndexed(index_count_, 0, 0);
-
+		
 		PostFrameRenderBehaviour();
 	}
 }

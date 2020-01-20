@@ -15,7 +15,12 @@ namespace Graphics
 	//{
 	//	float r, g, b, a;
 	//};
+	//struct Vertex
+	//{
+	//	float x, y, z;
+	//};
 
+	//using Vertex = float;//objl::Vertex;//tinyobj::real_t;
 	//using Color = float[4];
 	//struct Vertex //todo: switch to directXMath and get dem SIMD benz
 	//{
@@ -62,5 +67,8 @@ namespace Graphics
 
 		ID3D11RenderTargetView* render_target_{};
 		ID3D11Texture2D* back_buffer_{};
+
+		std::vector<Vertex> vertices;
+		ID3D11InputLayout* input_layout;
 	};
 }
