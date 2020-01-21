@@ -15,20 +15,25 @@ namespace Graphics
 	//{
 	//	float r, g, b, a;
 	//};
+	//struct Vertex
+	//{
+	//	float x, y, z;
+	//};
 
-	using Color = float[4];
-	struct Vertex //todo: switch to directXMath and get dem SIMD benz
-	{
-		float x, y, z;
-		Color color;
-	};
-
-	static Vertex OurVertices[] =
-	{
-		{0.0f, 0.5f, 0.5f, {1.0f, 0.0f, 0.0f, 1.0f}},
-		{0.45f, -0.5, 0.5f, {0.0f, 1.0f, 0.0f, 1.0f}},
-		{-0.45f, -0.5f, 0.5f, {0.0f, 0.0f, 1.0f, 1.0f}}
-	};
+	//using Vertex = float;//objl::Vertex;//tinyobj::real_t;
+	//using Color = float[4];
+	//struct Vertex //todo: switch to directXMath and get dem SIMD benz
+	//{
+	//	float x, y, z;
+	//	Color color;
+	//};
+	//
+	//static Vertex OurVertices[] =
+	//{
+	//	{0.0f, 0.5f, 0.5f, {1.0f, 0.0f, 0.0f, 1.0f}},
+	//	{0.45f, -0.5, 0.5f, {0.0f, 1.0f, 0.0f, 1.0f}},
+	//	{-0.45f, -0.5f, 0.5f, {0.0f, 0.0f, 1.0f, 1.0f}}
+	//};
 
 	class DX11Renderer final : public IRenderer 
 	{
@@ -41,6 +46,7 @@ namespace Graphics
 	protected:
 		virtual void PreFrameRenderBehaviour() final;
 		virtual void PostFrameRenderBehaviour() final;
+		virtual void SetModelsToRender(Models const& models) final;
 
 	private:
 		
@@ -51,6 +57,9 @@ namespace Graphics
 		ID3D11VertexShader* vertex_shader_{};
 		ID3D11Buffer* vertices_buffer_{};
 
+		ID3D11Buffer* index_buffer_{};
+		UINT index_count_{};
+
 		ID3D11PixelShader* pixel_shader_{};
 
 		ID3D11DepthStencilView* depth_stencil_view_{};
@@ -58,5 +67,12 @@ namespace Graphics
 
 		ID3D11RenderTargetView* render_target_{};
 		ID3D11Texture2D* back_buffer_{};
+
+		std::vector<Vertex> vertices;
+		std::vector<unsigned int> indicies;
+		ID3D11InputLayout* input_layout;
+
+		ID3DBlob* vertex_shader_blob;
+		ID3DBlob* pixel_shader_blob;
 	};
 }

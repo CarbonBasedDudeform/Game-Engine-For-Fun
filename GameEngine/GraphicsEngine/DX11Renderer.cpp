@@ -3,6 +3,7 @@
 #pragma warning(push, 0) //disable warnings for external headers
 #include <filesystem>   
 #include <iostream> //todo: switch to some non-basic bitch logger
+#include <DirectXMath.h>
 #pragma warning(pop) //enable warnings again
 
 namespace Graphics
@@ -106,14 +107,14 @@ namespace Graphics
 		viewport.TopLeftY = 0;
 		viewport.Width = static_cast<float>(width);
 		viewport.Height = static_cast<float>(height);
-		//viewport.MinDepth = 0.0f;
-		//viewport.MaxDepth = 1.0f;
+		viewport.MinDepth = 0.0f;
+		viewport.MaxDepth = 1.0f;
 
 		context_->RSSetViewports(1, &viewport);
-		
-		ID3DBlob* vertex_shader_blob = load_shader_blob(L"DefaultVertexShaderDx11.cso");
-		ID3DBlob* pixel_shader_blob = load_shader_blob(L"DefaultPixelShaderDx11.cso");
 
+		//set up shaders
+		vertex_shader_blob = load_shader_blob(L"DefaultVertexShaderDx11.cso");
+		pixel_shader_blob = load_shader_blob(L"DefaultPixelShaderDx11.cso");
 		
 		device_->CreateVertexShader(vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), nullptr, &vertex_shader_);
 		device_->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), nullptr, &pixel_shader_);
@@ -122,32 +123,26 @@ namespace Graphics
 		context_->PSSetShader(pixel_shader_, nullptr, 0);
 
 		//set up input layout
-
 		ID3D11InputLayout* input_layout;
 		D3D11_INPUT_ELEMENT_DESC input_desc[] =
 		{
 			{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-			{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
 		};
-
-		device_->CreateInputLayout(input_desc, 2, vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout);
+		 
+		device_->CreateInputLayout(input_desc, 1, vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout);
 		context_->IASetInputLayout(input_layout);
 
-
-		//set up vertex buffer
-		D3D11_BUFFER_DESC buffer_desc;
-		ZeroMemory(&buffer_desc, sizeof(buffer_desc));
-		buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-		buffer_desc.ByteWidth = sizeof(Vertex) * 3;
-		buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-		device_->CreateBuffer(&buffer_desc, nullptr, &vertices_buffer_);
+		//set raster state
+		D3D11_RASTERIZER_DESC raster_desc;
+		ZeroMemory(&raster_desc, sizeof(raster_desc));
+		raster_desc.CullMode = D3D11_CULL_BACK;
+		//raster_desc.DepthClipEnable = true;
+		raster_desc.FrontCounterClockwise = false;
+		raster_desc.FillMode = D3D11_FILL_WIREFRAME;
 		
-		D3D11_MAPPED_SUBRESOURCE mapped_subresource;
-		context_->Map(vertices_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
-		memcpy(mapped_subresource.pData, OurVertices, sizeof(OurVertices));
-		context_->Unmap(vertices_buffer_, 0);
+		ID3D11RasterizerState* raster_state;
+		device_->CreateRasterizerState(&raster_desc, &raster_state);
+		context_->RSSetState(raster_state);
 
 		return true;
 	}
@@ -163,20 +158,59 @@ namespace Graphics
 		swap_chain_->Present(0, 0);
 	}
 
-	void DX11Renderer::Render()
+	void DX11Renderer::SetModelsToRender(Models const& models)
 	{
-		PreFrameRenderBehaviour();
+		IRenderer::SetModelsToRender(models);
+
+		//if there is nothing, then bye bye
+		if (models.empty()) return;
+
+
+		indicies = models.at(0).getIndices();
+		vertices = models.at(0).getVertices();
+		index_count_ = indicies.size();
+
+		//create vertex buffer
+
+		D3D11_SUBRESOURCE_DATA vertex_buffer_sub_resource;
+		vertex_buffer_sub_resource.pSysMem = vertices.data();
+
+		D3D11_BUFFER_DESC buffer_desc;
+		ZeroMemory(&buffer_desc, sizeof(buffer_desc));
+		buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+		buffer_desc.ByteWidth = sizeof(Vertex) * vertices.size();
+		buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+		device_->CreateBuffer(&buffer_desc, &vertex_buffer_sub_resource, &vertices_buffer_);
+
+		//create index buffer
+
+		D3D11_SUBRESOURCE_DATA index_buffer_sub_resource;
+		index_buffer_sub_resource.pSysMem = indicies.data();
+
+		D3D11_BUFFER_DESC index_buffer_desc;
+		ZeroMemory(&index_buffer_desc, sizeof(index_buffer_desc));
+		index_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+		index_buffer_desc.ByteWidth = sizeof(indicies[0]) * index_count_;
+		index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+		index_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+		device_->CreateBuffer(&index_buffer_desc, &index_buffer_sub_resource, &index_buffer_);
+
 		auto const stride = UINT{ sizeof(Vertex) };
 		auto const offset = UINT{ 0 };
 		context_->IASetVertexBuffers(0, 1, &vertices_buffer_, &stride, &offset);
+		context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
 		context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		context_->Draw(3, 0);
+	}
 
-		//for (auto& current_model : scene_models_)
-		{
-			//render the model...
+	void DX11Renderer::Render()
+	{
+		PreFrameRenderBehaviour();
 
-		}
+		context_->DrawIndexed(index_count_, 0, 0);
+		
 		PostFrameRenderBehaviour();
 	}
 }

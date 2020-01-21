@@ -84,3 +84,5 @@ GameEngine/GameplayEngine/x64/Debug/game.nativecodeanalysis.xml
 *.sarif
 *.enc
 *.tmp
+
+*.FileListAbsolute.txt

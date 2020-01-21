@@ -29,7 +29,7 @@ namespace Graphics
 		virtual bool CreateContext(size_t height, size_t width, HWND windowHandle) = 0;
 		virtual void Render() = 0;
 
-		void SetModelsToRender(Models const& models) {
+		virtual void SetModelsToRender(Models const& models) {
 			scene_models_ = models;
 		}
 
