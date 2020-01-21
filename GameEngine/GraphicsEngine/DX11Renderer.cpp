@@ -135,7 +135,7 @@ namespace Graphics
 		//set raster state
 		D3D11_RASTERIZER_DESC raster_desc;
 		ZeroMemory(&raster_desc, sizeof(raster_desc));
-		raster_desc.CullMode = D3D11_CULL_NONE;
+		raster_desc.CullMode = D3D11_CULL_BACK;
 		//raster_desc.DepthClipEnable = true;
 		raster_desc.FrontCounterClockwise = false;
 		raster_desc.FillMode = D3D11_FILL_WIREFRAME;
@@ -203,17 +203,12 @@ namespace Graphics
 		context_->IASetVertexBuffers(0, 1, &vertices_buffer_, &stride, &offset);
 		context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
 		context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		//auto verts = std::wstring{ L"out: " + vertices.size() };
-		//OutputDebugStringW(verts.c_str());
-		//context_->IASetInputLayout(input_layout);
 	}
 
 	void DX11Renderer::Render()
 	{
 		PreFrameRenderBehaviour();
 
-		//context_->Draw(vertices.size(), 0);
 		context_->DrawIndexed(index_count_, 0, 0);
 		
 		PostFrameRenderBehaviour();
