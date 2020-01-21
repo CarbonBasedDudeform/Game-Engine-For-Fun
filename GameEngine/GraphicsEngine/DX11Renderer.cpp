@@ -3,6 +3,7 @@
 #pragma warning(push, 0) //disable warnings for external headers
 #include <filesystem>   
 #include <iostream> //todo: switch to some non-basic bitch logger
+#include <DirectXMath.h>
 #pragma warning(pop) //enable warnings again
 
 namespace Graphics
@@ -112,8 +113,8 @@ namespace Graphics
 		context_->RSSetViewports(1, &viewport);
 
 		//set up shaders
-		ID3DBlob* vertex_shader_blob = load_shader_blob(L"DefaultVertexShaderDx11.cso");
-		ID3DBlob* pixel_shader_blob = load_shader_blob(L"DefaultPixelShaderDx11.cso");
+		vertex_shader_blob = load_shader_blob(L"DefaultVertexShaderDx11.cso");
+		pixel_shader_blob = load_shader_blob(L"DefaultPixelShaderDx11.cso");
 		
 		device_->CreateVertexShader(vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), nullptr, &vertex_shader_);
 		device_->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), nullptr, &pixel_shader_);
@@ -122,63 +123,26 @@ namespace Graphics
 		context_->PSSetShader(pixel_shader_, nullptr, 0);
 
 		//set up input layout
-		//ID3D11InputLayout* input_layout;
-		//D3D11_INPUT_ELEMENT_DESC input_desc[] =
-		//{
-		//	{L"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		//};
-		//
-		//device_->CreateInputLayout(input_desc, 1, vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout);
-		//context_->IASetInputLayout(input_layout);
-
-		
+		ID3D11InputLayout* input_layout;
 		D3D11_INPUT_ELEMENT_DESC input_desc[] =
 		{
 			{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
 		};
-
+		 
 		device_->CreateInputLayout(input_desc, 1, vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout);
-
-
-		////create vertex buffer
-		//D3D11_BUFFER_DESC buffer_desc;
-		//ZeroMemory(&buffer_desc, sizeof(buffer_desc));
-		//buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-		//buffer_desc.ByteWidth = sizeof(Vertex) * 24000;
-		//buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		//buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		//
-		//device_->CreateBuffer(&buffer_desc, nullptr, &vertices_buffer_);
-		//
-		////create index buffer
-		//D3D11_BUFFER_DESC index_buffer_desc;
-		//ZeroMemory(&index_buffer_desc, sizeof(index_buffer_desc));
-		//index_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-		//index_buffer_desc.ByteWidth = sizeof(int) * 80000;
-		//index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		//index_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		//
-		//device_->CreateBuffer(&index_buffer_desc, nullptr, &index_buffer_);
-
+		//context_->IASetInputLayout(input_layout);
 
 		//set raster state
 		D3D11_RASTERIZER_DESC raster_desc;
 		ZeroMemory(&raster_desc, sizeof(raster_desc));
-		raster_desc.CullMode = D3D11_CULL_BACK;
+		raster_desc.CullMode = D3D11_CULL_NONE;
 		//raster_desc.DepthClipEnable = true;
-		raster_desc.FrontCounterClockwise = true;
-		raster_desc.FillMode = D3D11_FILL_SOLID;
+		raster_desc.FrontCounterClockwise = false;
+		raster_desc.FillMode = D3D11_FILL_WIREFRAME;
 		
 		ID3D11RasterizerState* raster_state;
 		device_->CreateRasterizerState(&raster_desc, &raster_state);
 		context_->RSSetState(raster_state);
-
-
-		//auto const stride = UINT{ sizeof(Vertex) };
-		//auto const offset = UINT{ 0 };
-		//context_->IASetVertexBuffers(0, 1, &vertices_buffer_, &stride, &offset);
-		//context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
-		//context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		return true;
 	}
@@ -201,62 +165,11 @@ namespace Graphics
 		//if there is nothing, then bye bye
 		if (models.empty()) return;
 
-		//auto vertices = 
-		//auto temp = models.at(0).getIndices();
-		//index_count_ = temp.size();
 
-		////map indices to index buffer
-		//{
-		//	//D3D11_MAPPED_SUBRESOURCE mapped_subresource;
-		//	//context_->Map(index_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
-		//
-		//auto temp = std::vector<int>{};
-			///for (auto& idx : models.at(0).getShapes())
-			//
-		//auto v_temp = models.at(0).getVertices();
-		////vertices = v_temp;
-		//		for (auto& index : models.at(0).getIndices())
-		//		{
-		//			temp.push_back(temp.size());
-		//	
-		//			vertices.push_back(models.at(0).getVertices()[index]);
-		//			//vertices.push_back(models.at(0).getVertices()[3 * (int)index+ 1]);
-		//			//vertices.push_back(models.at(0).getVertices()[3 * (int)index+ 2]);
-		//		}
-		//	
+		auto temp = models.at(0).getIndices();
+		vertices = models.at(0).getVertices();
+		index_count_ = temp.size();
 
-			auto temp = models.at(0).getIndices();
-			vertices = models.at(0).getVertices();
-			//index_count_ = vertices.size();
-		//
-			index_count_ = *(std::max_element(temp.begin(), temp.end()));//whatever i do what i want //temp.size();// sizeof(temp[0]);// *sizeof(int);
-		//	//memcpy(mapped_subresource.pData, temp.data(), sizeof(int) * temp.size());
-		//
-		//	//context_->Unmap(index_buffer_, 0);
-		//}
-		////
-		////map vertices to vertex buffer
-		//{
-		//	vertices = models.at(0).getAttribute().vertices;
-		//	//D3D11_MAPPED_SUBRESOURCE mapped_subresource;
-		////	context_->Map(vertices_buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
-		//
-		//	//auto const vertex_count =  vertices.size(); // * sizeof(Vertex);
-		//	//index_count_ = vertices.size();// *sizeof(tinyobj::real_t);
-		//	//memcpy(mapped_subresource.pData, vertices.data(), vertex_count);
-		//
-		//	//context_->Unmap(vertices_buffer_, 0);
-		//}
-		//
-		//
-		//
-		//auto const stride = UINT{ sizeof(Vertex)};
-		//auto const offset = UINT{ 0 };
-		//context_->IASetVertexBuffers(0, 1, &vertices_buffer_, &stride, &offset);
-		//context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
-		//context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		//vertices = models.at(0).getVertices();
 		//create vertex buffer
 
 		D3D11_SUBRESOURCE_DATA vertex_buffer_sub_resource;
@@ -291,15 +204,16 @@ namespace Graphics
 		context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
 		context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		
-		//context_->IASetInputLayout(input_layout);
+		//auto verts = std::wstring{ L"out: " + vertices.size() };
+		//OutputDebugStringW(verts.c_str());
+		context_->IASetInputLayout(input_layout);
 	}
 
 	void DX11Renderer::Render()
 	{
 		PreFrameRenderBehaviour();
 
-		//context_->Draw(index_count_, 0);
+		//context_->Draw(vertices.size() * sizeof(Vertex), 0);
 		context_->DrawIndexed(index_count_, 0, 0);
 		
 		PostFrameRenderBehaviour();

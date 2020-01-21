@@ -24,7 +24,8 @@ MAIN
 	game->Initialise(std::string("Demo App"), 600, 800);
 
 	std::unique_ptr<Gameplay::Scene> scene = std::make_unique<TestScene>();
-	scene->AddModel(std::filesystem::current_path() / "Models" / "Teapot" / "teapot.obj");
+	scene->AddModel(std::filesystem::current_path() / "Models" / "Sphere" / "sphere.obj");
+	//scene->AddModel(std::filesystem::current_path() / "Models" / "Teapot" / "teapot.obj");
 	//scene->AddModel(std::filesystem::current_path() / "Models" / "Cube" / "cube.obj");
 	//scene->AddModel(std::filesystem::current_path() / "Models" / "Dragon" / "dragon.obj");
 	game->SetScene(std::move(scene));

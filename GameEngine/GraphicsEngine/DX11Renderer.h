@@ -70,5 +70,8 @@ namespace Graphics
 
 		std::vector<Vertex> vertices;
 		ID3D11InputLayout* input_layout;
+
+		ID3DBlob* vertex_shader_blob;
+		ID3DBlob* pixel_shader_blob;
 	};
 }
