@@ -69,6 +69,7 @@ namespace Graphics
 		ID3D11Texture2D* back_buffer_{};
 
 		std::vector<Vertex> vertices;
+		std::vector<unsigned int> indicies;
 		ID3D11InputLayout* input_layout;
 
 		ID3DBlob* vertex_shader_blob;

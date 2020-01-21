@@ -130,7 +130,7 @@ namespace Graphics
 		};
 		 
 		device_->CreateInputLayout(input_desc, 1, vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout);
-		//context_->IASetInputLayout(input_layout);
+		context_->IASetInputLayout(input_layout);
 
 		//set raster state
 		D3D11_RASTERIZER_DESC raster_desc;
@@ -166,9 +166,9 @@ namespace Graphics
 		if (models.empty()) return;
 
 
-		auto temp = models.at(0).getIndices();
+		indicies = models.at(0).getIndices();
 		vertices = models.at(0).getVertices();
-		index_count_ = temp.size();
+		index_count_ = indicies.size();
 
 		//create vertex buffer
 
@@ -187,12 +187,12 @@ namespace Graphics
 		//create index buffer
 
 		D3D11_SUBRESOURCE_DATA index_buffer_sub_resource;
-		index_buffer_sub_resource.pSysMem = temp.data();
+		index_buffer_sub_resource.pSysMem = indicies.data();
 
 		D3D11_BUFFER_DESC index_buffer_desc;
 		ZeroMemory(&index_buffer_desc, sizeof(index_buffer_desc));
 		index_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-		index_buffer_desc.ByteWidth = sizeof(temp[0]) * index_count_;
+		index_buffer_desc.ByteWidth = sizeof(indicies[0]) * index_count_;
 		index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 		index_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
@@ -206,14 +206,14 @@ namespace Graphics
 
 		//auto verts = std::wstring{ L"out: " + vertices.size() };
 		//OutputDebugStringW(verts.c_str());
-		context_->IASetInputLayout(input_layout);
+		//context_->IASetInputLayout(input_layout);
 	}
 
 	void DX11Renderer::Render()
 	{
 		PreFrameRenderBehaviour();
 
-		//context_->Draw(vertices.size() * sizeof(Vertex), 0);
+		//context_->Draw(vertices.size(), 0);
 		context_->DrawIndexed(index_count_, 0, 0);
 		
 		PostFrameRenderBehaviour();
