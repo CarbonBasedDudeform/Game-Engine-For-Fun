@@ -232,7 +232,6 @@ namespace Graphics
 		device_->CreateShaderResourceView(m_texture, &srvDesc, &m_textureView);
 		context_->GenerateMips(m_textureView);
 		context_->PSSetShaderResources(0, 1, &m_textureView);
-		//context_->PSSetShaderResources(0, 1, nullptr);
 	}
 
 	void DX11Renderer::Render()

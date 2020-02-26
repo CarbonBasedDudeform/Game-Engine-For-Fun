@@ -13,29 +13,7 @@
 namespace Graphics
 {
 	Model::Model(std::filesystem::path const& filename)
-	{
-		//objl::Loader loader;
-		//loaded_okay_ = loader.LoadFile(filename.string());
-		//for (auto& mesh : loader.LoadedMeshes)
-		//{
-		//	for (auto& v : mesh.Vertices)
-		//	{
-		//		vertices.emplace_back(Vertex{ v.Position.X, v.Position.Y, v.Position.Z });
-		//	}
-		//
-		//	for (auto& i : mesh.Indices)
-		//	{
-		//		indices.emplace_back(i);
-		//	}
-		//}
-		//auto verts = loader.LoadedVertices;
-		//for (auto& v : verts)
-		//{
-		//	vertices.emplace_back(Vertex{ v.Position.X, v.Position.Y, v.Position.Z });
-		//}
-		//
-		//indices = loader.LoadedIndices;
-		
+	{	
 		std::string warn;
 		std::string err;
 		tinyobj::attrib_t attribute_;
@@ -43,10 +21,6 @@ namespace Graphics
 		std::vector<tinyobj::material_t> materials_;
 
 		loaded_okay_ = tinyobj::LoadObj(&attribute_, &shapes_, &materials_, &warn, &err, filename.string().c_str());
-		//for (int i = 1; i < attribute_.texcoords.size(); i++) 
-		//{
-		//	UVs.push_back({ attribute_.texcoords[i - 1], attribute_.texcoords[i] });
-		//}
 
 		for (auto& shape : shapes_) 
 		{
@@ -61,11 +35,6 @@ namespace Graphics
 				});
 			}
 		}
-
-		//for (int i = 0; i < attribute_.vertices.size() - 3; i++)
-		//{
-		//	vertices.push_back(Vertex{ attribute_.vertices[i], attribute_.vertices[i + 1], attribute_.vertices[i + 2] });
-		//}
 		
 		if (!warn.empty()) {
 			std::cout << warn << std::endl;
@@ -77,7 +46,7 @@ namespace Graphics
 
 		auto const stem = filename.stem();
 		auto const parent = filename.parent_path();
-		auto const texture_path = parent / std::filesystem::path{ std::string{"default.png"}};
+		auto const texture_path = parent / std::filesystem::path{ stem.string() + std::string{".png"}};
 		texture_.Data = stbi_load(texture_path.string().c_str(), &texture_.Width, &texture_.Height, &texture_.Comp, STBI_rgb_alpha);
 	}
 
@@ -101,24 +70,4 @@ namespace Graphics
 	{
 		return indices;
 	}
-
-	//std::vector<objl::Mesh> Model::getMesh() const
-	//{
-	//	return loader.LoadedMeshes;
-	//}
-
-	//Model::Shapes Model::getShapes() const
-	//{
-	//	return shapes_;
-	//}
-	//
-	//Model::Materials Model::getMaterials() const
-	//{
-	//	return materials_;
-	//}
-	//
-	//Model::Attribute Model::getAttribute() const
-	//{
-	//	return attribute_;
-	//}
 }

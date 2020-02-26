@@ -11,30 +11,6 @@
 
 namespace Graphics
 {
-	//struct Color //todo: make do good.
-	//{
-	//	float r, g, b, a;
-	//};
-	//struct Vertex
-	//{
-	//	float x, y, z;
-	//};
-
-	//using Vertex = float;//objl::Vertex;//tinyobj::real_t;
-	//using Color = float[4];
-	//struct Vertex //todo: switch to directXMath and get dem SIMD benz
-	//{
-	//	float x, y, z;
-	//	Color color;
-	//};
-	//
-	//static Vertex OurVertices[] =
-	//{
-	//	{0.0f, 0.5f, 0.5f, {1.0f, 0.0f, 0.0f, 1.0f}},
-	//	{0.45f, -0.5, 0.5f, {0.0f, 1.0f, 0.0f, 1.0f}},
-	//	{-0.45f, -0.5f, 0.5f, {0.0f, 0.0f, 1.0f, 1.0f}}
-	//};
-
 	class DX11Renderer final : public IRenderer 
 	{
 	public:
