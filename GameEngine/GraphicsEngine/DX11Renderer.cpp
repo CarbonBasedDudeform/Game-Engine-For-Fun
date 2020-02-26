@@ -113,8 +113,8 @@ namespace Graphics
 		context_->RSSetViewports(1, &viewport);
 
 		//set up shaders
-		vertex_shader_blob = load_shader_blob(L"DefaultVertexShaderDx11.cso");
-		pixel_shader_blob = load_shader_blob(L"DefaultPixelShaderDx11.cso");
+		vertex_shader_blob = load_shader_blob(L"TexturedVertexShaderDx11.cso");
+		pixel_shader_blob = load_shader_blob(L"TexturedPixelShaderDx11.cso");
 		
 		device_->CreateVertexShader(vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), nullptr, &vertex_shader_);
 		device_->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), nullptr, &pixel_shader_);
@@ -127,9 +127,10 @@ namespace Graphics
 		D3D11_INPUT_ELEMENT_DESC input_desc[] =
 		{
 			{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+			{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		};
 		 
-		device_->CreateInputLayout(input_desc, 1, vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout);
+		device_->CreateInputLayout(input_desc, 2, vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout);
 		context_->IASetInputLayout(input_layout);
 
 		//set raster state

@@ -44,13 +44,22 @@ namespace Graphics
 		std::vector<tinyobj::material_t> materials_;
 
 		loaded_okay_ = tinyobj::LoadObj(&attribute_, &shapes_, &materials_, &warn, &err, filename.string().c_str());
+		//for (int i = 1; i < attribute_.texcoords.size(); i++) 
+		//{
+		//	UVs.push_back({ attribute_.texcoords[i - 1], attribute_.texcoords[i] });
+		//}
 
-		for (auto& shape : shapes_) {
-			for (auto& i : shape.mesh.indices) {
+		for (auto& shape : shapes_) 
+		{
+			for (auto& i : shape.mesh.indices) 
+			{
 				indices.push_back(indices.size());
 				vertices.push_back(Vertex{ attribute_.vertices[3*i.vertex_index + 0], 
 										   attribute_.vertices[3*i.vertex_index + 1], 
-										   attribute_.vertices[3*i.vertex_index + 2] });
+										   attribute_.vertices[3*i.vertex_index + 2],
+										   attribute_.texcoords[2 * i.texcoord_index + 0],
+										   attribute_.texcoords[2 * i.texcoord_index + 1] 
+				});
 			}
 		}
 

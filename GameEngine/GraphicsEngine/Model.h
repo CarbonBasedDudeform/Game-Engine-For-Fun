@@ -19,9 +19,8 @@ namespace Graphics
 {
 	struct Vertex
 	{
-		float x, y, z;
+		float x, y, z, u, v;
 	};
-
 	class Model
 	{
 	public:
@@ -40,6 +39,7 @@ namespace Graphics
 		//std::vector<objl::Mesh> getMesh() const;
 		std::vector<Vertex> getVertices() const;
 		std::vector<unsigned int> getIndices() const;
+
 	private:
 		bool loaded_okay_{};
 		std::vector<Vertex> vertices;
