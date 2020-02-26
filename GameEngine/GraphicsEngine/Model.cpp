@@ -6,9 +6,8 @@
 #include <iostream> //TODO: replace with actual logging service...
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "..\\..\\Externals\tinyobj_loader_opt.h"
-//#include "..\\..\\Externals\OBJ_Loader.h"
-//#include "..\\..\\Externals\OBJ_Loader.h"
-//#include <assimp/scene.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include "..\\..\\Externals\stb_image.h"
 #pragma warning(pop)
 
 namespace Graphics
@@ -75,6 +74,16 @@ namespace Graphics
 		if (!err.empty()) {
 			std::cerr << err << std::endl;
 		}
+
+		auto const stem = filename.stem();
+		auto const parent = filename.parent_path();
+		auto const texture_path = parent / std::filesystem::path{ std::string{"default.png"}};
+		texture_.Data = stbi_load(texture_path.string().c_str(), &texture_.Width, &texture_.Height, &texture_.Comp, STBI_rgb_alpha);
+	}
+
+	Texture Model::getTexture() const
+	{
+		return texture_;
 	}
 
 	bool Model::isOk() const

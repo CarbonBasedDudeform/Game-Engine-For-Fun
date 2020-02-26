@@ -4,6 +4,7 @@
 #include <filesystem>   
 #include <iostream> //todo: switch to some non-basic bitch logger
 #include <DirectXMath.h>
+
 #pragma warning(pop) //enable warnings again
 
 namespace Graphics
@@ -139,7 +140,7 @@ namespace Graphics
 		raster_desc.CullMode = D3D11_CULL_BACK;
 		//raster_desc.DepthClipEnable = true;
 		raster_desc.FrontCounterClockwise = false;
-		raster_desc.FillMode = D3D11_FILL_WIREFRAME;
+		raster_desc.FillMode = D3D11_FILL_SOLID;
 		
 		ID3D11RasterizerState* raster_state;
 		device_->CreateRasterizerState(&raster_desc, &raster_state);
@@ -204,6 +205,34 @@ namespace Graphics
 		context_->IASetVertexBuffers(0, 1, &vertices_buffer_, &stride, &offset);
 		context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
 		context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		D3D11_TEXTURE2D_DESC texDesc;
+		auto const& texture = models.at(0).getTexture();
+		texDesc.Height = texture.Height;
+		texDesc.Width = texture.Width;
+		texDesc.MipLevels = 0;
+		texDesc.ArraySize = 1;
+		texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		texDesc.SampleDesc.Count = 1;
+		texDesc.SampleDesc.Quality = 0;
+		texDesc.Usage = D3D11_USAGE_DEFAULT;
+		texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+		texDesc.CPUAccessFlags = 0;
+		texDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+		device_->CreateTexture2D(&texDesc, NULL, &m_texture);
+		auto rowPitch = (texture.Width * 4) * sizeof(unsigned char);
+		context_->UpdateSubresource(m_texture, 0, NULL, texture.Data, rowPitch, 0);
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+		srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MostDetailedMip = 0;
+		srvDesc.Texture2D.MipLevels = 1;
+
+		device_->CreateShaderResourceView(m_texture, &srvDesc, &m_textureView);
+		context_->GenerateMips(m_textureView);
+		context_->PSSetShaderResources(0, 1, &m_textureView);
+		//context_->PSSetShaderResources(0, 1, nullptr);
 	}
 
 	void DX11Renderer::Render()

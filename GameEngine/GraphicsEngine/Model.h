@@ -21,6 +21,15 @@ namespace Graphics
 	{
 		float x, y, z, u, v;
 	};
+	
+	using ImageData = unsigned char*;
+
+	struct Texture
+	{
+		int Width, Height, Comp;
+		ImageData Data;
+	};
+
 	class Model
 	{
 	public:
@@ -39,11 +48,12 @@ namespace Graphics
 		//std::vector<objl::Mesh> getMesh() const;
 		std::vector<Vertex> getVertices() const;
 		std::vector<unsigned int> getIndices() const;
-
+		Texture getTexture() const;
 	private:
 		bool loaded_okay_{};
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;
+		Texture texture_;
 		//objl::Loader loader;
 		//Shapes shapes_{};
 		//Materials materials_{};
