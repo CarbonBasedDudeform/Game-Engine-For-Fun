@@ -168,85 +168,93 @@ namespace Graphics
 		if (models.empty()) return;
 
 
-		indicies = models.at(0).getIndices();
-		vertices = models.at(0).getVertices();
-		index_count_ = indicies.size();
-
-		//create vertex buffer
-
-		D3D11_SUBRESOURCE_DATA vertex_buffer_sub_resource;
-		vertex_buffer_sub_resource.pSysMem = vertices.data();
-
-		D3D11_BUFFER_DESC buffer_desc;
-		ZeroMemory(&buffer_desc, sizeof(buffer_desc));
-		buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-		buffer_desc.ByteWidth = sizeof(Vertex) * vertices.size();
-		buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-		device_->CreateBuffer(&buffer_desc, &vertex_buffer_sub_resource, &vertices_buffer_);
-
-		//create index buffer
-
-		D3D11_SUBRESOURCE_DATA index_buffer_sub_resource;
-		index_buffer_sub_resource.pSysMem = indicies.data();
-
-		D3D11_BUFFER_DESC index_buffer_desc;
-		ZeroMemory(&index_buffer_desc, sizeof(index_buffer_desc));
-		index_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-		index_buffer_desc.ByteWidth = sizeof(indicies[0]) * index_count_;
-		index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		index_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-		device_->CreateBuffer(&index_buffer_desc, &index_buffer_sub_resource, &index_buffer_);
-
-		auto const stride = UINT{ sizeof(Vertex) };
-		auto const offset = UINT{ 0 };
-		context_->IASetVertexBuffers(0, 1, &vertices_buffer_, &stride, &offset);
-		context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
-		context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		for(auto& texture : models[0].getTextures())
-		{
-
-			ID3D11ShaderResourceView* m_textureView;
-
-			ID3D11Texture2D* m_texture;
-
-			D3D11_TEXTURE2D_DESC texDesc;
-			 //if i forget this i am a horrible, horrible little gremlin.
-			texDesc.Height = texture.Height;
-			texDesc.Width = texture.Width;
-			texDesc.MipLevels = 0;
-			texDesc.ArraySize = 1;
-			texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-			texDesc.SampleDesc.Count = 1;
-			texDesc.SampleDesc.Quality = 0;
-			texDesc.Usage = D3D11_USAGE_DEFAULT;
-			texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-			texDesc.CPUAccessFlags = 0;
-			texDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
-
-			auto hr = device_->CreateTexture2D(&texDesc, NULL, &m_texture);
-			auto rowPitch = (texture.Width * 4) * sizeof(unsigned char);
-			context_->UpdateSubresource(m_texture, 0, NULL, texture.Data, rowPitch, 0);
-			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-			srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-			srvDesc.Texture2D.MostDetailedMip = 0;
-			srvDesc.Texture2D.MipLevels = 1;
-
-			device_->CreateShaderResourceView(m_texture, &srvDesc, &m_textureView);
-			context_->GenerateMips(m_textureView);
-			context_->PSSetShaderResources(0, 1, &m_textureView);
-		}
 	}
 
 	void DX11Renderer::Render()
 	{
 		PreFrameRenderBehaviour();
 
-		context_->DrawIndexed(index_count_, 0, 0);
+		for (auto& scene : scene_models_) {
+			for (auto& mesh : scene.getMeshes())
+			{
+				indicies = mesh.indices;
+				vertices = mesh.vertices;
+				index_count_ = indicies.size();
+
+				//create vertex buffer
+
+				D3D11_SUBRESOURCE_DATA vertex_buffer_sub_resource;
+				vertex_buffer_sub_resource.pSysMem = vertices.data();
+
+				D3D11_BUFFER_DESC buffer_desc;
+				ZeroMemory(&buffer_desc, sizeof(buffer_desc));
+				buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+				buffer_desc.ByteWidth = sizeof(Vertex) * vertices.size();
+				buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+				buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+				device_->CreateBuffer(&buffer_desc, &vertex_buffer_sub_resource, &vertices_buffer_);
+
+				//create index buffer
+
+				D3D11_SUBRESOURCE_DATA index_buffer_sub_resource;
+				index_buffer_sub_resource.pSysMem = indicies.data();
+
+				D3D11_BUFFER_DESC index_buffer_desc;
+				ZeroMemory(&index_buffer_desc, sizeof(index_buffer_desc));
+				index_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+				index_buffer_desc.ByteWidth = sizeof(indicies[0]) * index_count_;
+				index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+				index_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+				device_->CreateBuffer(&index_buffer_desc, &index_buffer_sub_resource, &index_buffer_);
+
+				auto const stride = UINT{ sizeof(Vertex) };
+				auto const offset = UINT{ 0 };
+				context_->IASetVertexBuffers(0, 1, &vertices_buffer_, &stride, &offset);
+				context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
+				context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+				auto& texture = mesh.texture;
+
+				if (texture->Data) {
+					ID3D11ShaderResourceView* m_textureView;
+
+					ID3D11Texture2D* m_texture;
+
+					D3D11_TEXTURE2D_DESC texDesc;
+					//if i forget this i am a horrible, horrible little gremlin.
+					texDesc.Height = texture->Height;
+					texDesc.Width = texture->Width;
+					texDesc.MipLevels = 0;
+					texDesc.ArraySize = 1;
+					texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+					texDesc.SampleDesc.Count = 1;
+					texDesc.SampleDesc.Quality = 0;
+					texDesc.Usage = D3D11_USAGE_DEFAULT;
+					texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+					texDesc.CPUAccessFlags = 0;
+					texDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+					auto hr = device_->CreateTexture2D(&texDesc, NULL, &m_texture);
+					if (hr != S_OK) throw std::exception{};
+
+					auto rowPitch = (texture->Width * 4) * sizeof(unsigned char);
+					context_->UpdateSubresource(m_texture, 0, NULL, texture->Data, rowPitch, 0);
+					D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+					srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+					srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+					srvDesc.Texture2D.MostDetailedMip = 0;
+					srvDesc.Texture2D.MipLevels = 1;
+
+					device_->CreateShaderResourceView(m_texture, &srvDesc, &m_textureView);
+					context_->GenerateMips(m_textureView);
+					context_->PSSetShaderResources(0, 1, &m_textureView);
+				}
+				context_->DrawIndexed(index_count_, 0, 0);
+			}
+		}
+		
 		
 		PostFrameRenderBehaviour();
 	}

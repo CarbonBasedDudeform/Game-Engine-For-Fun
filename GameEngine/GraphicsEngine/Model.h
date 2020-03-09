@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <filesystem>
+#include <map>
 #pragma warning(pop)
 
 namespace Graphics
@@ -11,18 +12,29 @@ namespace Graphics
 	struct Vertex
 	{
 		float x, y, z, u, v;
-		//int texutre_index;
+		int texutre_index;
 	};
 	
 	using ImageData = unsigned char*;
 
-	struct Texture
+	struct PNGTexture
 	{
 		int Width, Height, Comp;
 		ImageData Data;
 	};
 
-	using Textures = std::vector<Texture>;
+	using Material = PNGTexture;
+
+	using Materials = std::vector<Material>;
+
+	struct Mesh
+	{
+		std::vector<Vertex> vertices;
+		std::vector<unsigned int> indices;
+		std::shared_ptr<Material> texture;
+	};
+
+	using Meshes = std::vector<Mesh>;
 
 	class Model
 	{
@@ -30,14 +42,12 @@ namespace Graphics
 		Model(std::filesystem::path const& filename);
 
 		bool isOk() const;
-		std::vector<Vertex> getVertices() const;
-		std::vector<unsigned int> getIndices() const;
-		Textures getTextures() const;
+		const Meshes& getMeshes() const;
+
 	private:
 		bool loaded_okay_{};
-		std::vector<Vertex> vertices;
-		std::vector<unsigned int> indices;
-		Textures textures_;
+		Meshes meshes_;
+		std::map<std::string, std::shared_ptr<Material>> materials_;
 	};
 
 	using Models = std::vector<Model>;

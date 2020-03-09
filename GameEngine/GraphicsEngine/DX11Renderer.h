@@ -47,7 +47,8 @@ namespace Graphics
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indicies;
 		ID3D11InputLayout* input_layout;
-
+		
+		//shaders into a shader struct?
 		ID3DBlob* vertex_shader_blob;
 		ID3DBlob* pixel_shader_blob;
 

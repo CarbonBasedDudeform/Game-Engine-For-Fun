@@ -16,27 +16,45 @@ namespace Graphics
 	{	
 		std::string warn;
 		std::string err;
-		tinyobj::attrib_t attribute_;
-		std::vector<tinyobj::shape_t> shapes_;
-		std::vector<tinyobj::material_t> materials_;
+		tinyobj::attrib_t attribute;
+		std::vector<tinyobj::shape_t> shapes;
+		std::vector<tinyobj::material_t> materials;
 		auto const mtl_path = filename.parent_path().string();
-		loaded_okay_ = tinyobj::LoadObj(&attribute_, &shapes_, &materials_, &warn, &err, filename.string().c_str(), mtl_path.c_str());
+		loaded_okay_ = tinyobj::LoadObj(&attribute, &shapes, &materials, &warn, &err, filename.string().c_str(), mtl_path.c_str());
+		
+		auto const parent = filename.parent_path();
 
-		for (auto& shape : shapes_) 
+		for (auto& material : materials)
 		{
+			auto const texture_path = parent / std::filesystem::path{ material.diffuse_texname };
+			auto texture = std::make_shared<Material>();
+			texture->Data = stbi_load(texture_path.string().c_str(), &texture->Width, &texture->Height, &texture->Comp, STBI_rgb_alpha);
+			materials_[material.name] = std::move(texture);
+		}
+
+		for (auto& shape : shapes)
+		{
+			auto mesh = Mesh{};
+
 			for (auto& i : shape.mesh.indices) 
 			{
-				int const texture_index = shape.mesh.material_ids[i.vertex_index];
-				indices.push_back(indices.size());
-				vertices.push_back(Vertex{ attribute_.vertices[3*i.vertex_index + 0], 
-										   attribute_.vertices[3*i.vertex_index + 1], 
-										   attribute_.vertices[3*i.vertex_index + 2],
-										   attribute_.texcoords[2 * i.texcoord_index + 0],
-										   attribute_.texcoords[2 * i.texcoord_index + 1]
-										   //,texture_index
+				mesh.indices.push_back(mesh.indices.size());
+				mesh.vertices.push_back(Vertex{ attribute.vertices[3*i.vertex_index + 0], 
+										   attribute.vertices[3*i.vertex_index + 1], 
+										   attribute.vertices[3*i.vertex_index + 2],
+										   attribute.texcoords[2 * i.texcoord_index + 0],
+										   attribute.texcoords[2 * i.texcoord_index + 1]
 				});
+
+				int const texture_index = shape.mesh.material_ids[0]; //...not ideal
+				auto const material_name = materials[texture_index].name;
+				if (materials_.find(material_name) == materials_.end()) throw std::exception{"Trying to use non-existant material"};
+				mesh.texture = materials_[material_name];
 			}
+
+			meshes_.push_back(mesh);
 		}
+
 		
 		if (!warn.empty()) {
 			std::cout << warn << std::endl;
@@ -47,26 +65,7 @@ namespace Graphics
 		}
 
 		auto const stem = filename.stem();
-		auto const parent = filename.parent_path();
-
-		for (auto& material : materials_)
-		{
-			bool const bad_material = material.diffuse_texname.empty();
-			if (bad_material) continue;
-
-			auto const texture_path = parent / std::filesystem::path{ material.diffuse_texname };
-			bool const does_not_exist = !std::filesystem::exists(texture_path);
-			if (does_not_exist) continue;
-
-			auto texture = Texture{};
-			texture.Data = stbi_load(texture_path.string().c_str(), &texture.Width, &texture.Height, &texture.Comp, STBI_rgb_alpha);
-			textures_.push_back(texture);
-		}
-	}
-
-	Textures Model::getTextures() const
-	{
-		return textures_;
+		
 	}
 
 	bool Model::isOk() const
@@ -74,14 +73,8 @@ namespace Graphics
 		return loaded_okay_;
 	}
 
-	std::vector<Vertex> Model::getVertices() const
+	const Meshes& Model::getMeshes() const
 	{
-		return vertices;
-	}
-
-
-	std::vector<unsigned int> Model::getIndices() const
-	{
-		return indices;
+		return meshes_;
 	}
 }
