@@ -19,19 +19,21 @@ namespace Graphics
 		tinyobj::attrib_t attribute_;
 		std::vector<tinyobj::shape_t> shapes_;
 		std::vector<tinyobj::material_t> materials_;
-
-		loaded_okay_ = tinyobj::LoadObj(&attribute_, &shapes_, &materials_, &warn, &err, filename.string().c_str());
+		auto const mtl_path = filename.parent_path().string();
+		loaded_okay_ = tinyobj::LoadObj(&attribute_, &shapes_, &materials_, &warn, &err, filename.string().c_str(), mtl_path.c_str());
 
 		for (auto& shape : shapes_) 
 		{
 			for (auto& i : shape.mesh.indices) 
 			{
+				int const texture_index = shape.mesh.material_ids[i.vertex_index];
 				indices.push_back(indices.size());
 				vertices.push_back(Vertex{ attribute_.vertices[3*i.vertex_index + 0], 
 										   attribute_.vertices[3*i.vertex_index + 1], 
 										   attribute_.vertices[3*i.vertex_index + 2],
 										   attribute_.texcoords[2 * i.texcoord_index + 0],
-										   attribute_.texcoords[2 * i.texcoord_index + 1] 
+										   attribute_.texcoords[2 * i.texcoord_index + 1]
+										   //,texture_index
 				});
 			}
 		}
@@ -46,13 +48,25 @@ namespace Graphics
 
 		auto const stem = filename.stem();
 		auto const parent = filename.parent_path();
-		auto const texture_path = parent / std::filesystem::path{ stem.string() + std::string{".png"}};
-		texture_.Data = stbi_load(texture_path.string().c_str(), &texture_.Width, &texture_.Height, &texture_.Comp, STBI_rgb_alpha);
+
+		for (auto& material : materials_)
+		{
+			bool const bad_material = material.diffuse_texname.empty();
+			if (bad_material) continue;
+
+			auto const texture_path = parent / std::filesystem::path{ material.diffuse_texname };
+			bool const does_not_exist = !std::filesystem::exists(texture_path);
+			if (does_not_exist) continue;
+
+			auto texture = Texture{};
+			texture.Data = stbi_load(texture_path.string().c_str(), &texture.Width, &texture.Height, &texture.Comp, STBI_rgb_alpha);
+			textures_.push_back(texture);
+		}
 	}
 
-	Texture Model::getTexture() const
+	Textures Model::getTextures() const
 	{
-		return texture_;
+		return textures_;
 	}
 
 	bool Model::isOk() const

@@ -128,10 +128,10 @@ namespace Graphics
 		D3D11_INPUT_ELEMENT_DESC input_desc[] =
 		{
 			{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-			{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 		};
 		 
-		device_->CreateInputLayout(input_desc, 2, vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout);
+		device_->CreateInputLayout(input_desc, 2, vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout); // 3 = sizeof(input_desc) / sizeof(d3d11_input_element_desc) ?
 		context_->IASetInputLayout(input_layout);
 
 		//set raster state
@@ -206,32 +206,40 @@ namespace Graphics
 		context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
 		context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		D3D11_TEXTURE2D_DESC texDesc;
-		auto const& texture = models.at(0).getTexture();
-		texDesc.Height = texture.Height;
-		texDesc.Width = texture.Width;
-		texDesc.MipLevels = 0;
-		texDesc.ArraySize = 1;
-		texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		texDesc.SampleDesc.Count = 1;
-		texDesc.SampleDesc.Quality = 0;
-		texDesc.Usage = D3D11_USAGE_DEFAULT;
-		texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-		texDesc.CPUAccessFlags = 0;
-		texDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+		for(auto& texture : models[0].getTextures())
+		{
 
-		device_->CreateTexture2D(&texDesc, NULL, &m_texture);
-		auto rowPitch = (texture.Width * 4) * sizeof(unsigned char);
-		context_->UpdateSubresource(m_texture, 0, NULL, texture.Data, rowPitch, 0);
-		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-		srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-		srvDesc.Texture2D.MostDetailedMip = 0;
-		srvDesc.Texture2D.MipLevels = 1;
+			ID3D11ShaderResourceView* m_textureView;
 
-		device_->CreateShaderResourceView(m_texture, &srvDesc, &m_textureView);
-		context_->GenerateMips(m_textureView);
-		context_->PSSetShaderResources(0, 1, &m_textureView);
+			ID3D11Texture2D* m_texture;
+
+			D3D11_TEXTURE2D_DESC texDesc;
+			 //if i forget this i am a horrible, horrible little gremlin.
+			texDesc.Height = texture.Height;
+			texDesc.Width = texture.Width;
+			texDesc.MipLevels = 0;
+			texDesc.ArraySize = 1;
+			texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			texDesc.SampleDesc.Count = 1;
+			texDesc.SampleDesc.Quality = 0;
+			texDesc.Usage = D3D11_USAGE_DEFAULT;
+			texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+			texDesc.CPUAccessFlags = 0;
+			texDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+			auto hr = device_->CreateTexture2D(&texDesc, NULL, &m_texture);
+			auto rowPitch = (texture.Width * 4) * sizeof(unsigned char);
+			context_->UpdateSubresource(m_texture, 0, NULL, texture.Data, rowPitch, 0);
+			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+			srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+			srvDesc.Texture2D.MostDetailedMip = 0;
+			srvDesc.Texture2D.MipLevels = 1;
+
+			device_->CreateShaderResourceView(m_texture, &srvDesc, &m_textureView);
+			context_->GenerateMips(m_textureView);
+			context_->PSSetShaderResources(0, 1, &m_textureView);
+		}
 	}
 
 	void DX11Renderer::Render()

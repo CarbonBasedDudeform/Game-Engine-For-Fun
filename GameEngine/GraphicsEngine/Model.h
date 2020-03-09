@@ -11,6 +11,7 @@ namespace Graphics
 	struct Vertex
 	{
 		float x, y, z, u, v;
+		//int texutre_index;
 	};
 	
 	using ImageData = unsigned char*;
@@ -21,6 +22,8 @@ namespace Graphics
 		ImageData Data;
 	};
 
+	using Textures = std::vector<Texture>;
+
 	class Model
 	{
 	public:
@@ -29,12 +32,12 @@ namespace Graphics
 		bool isOk() const;
 		std::vector<Vertex> getVertices() const;
 		std::vector<unsigned int> getIndices() const;
-		Texture getTexture() const;
+		Textures getTextures() const;
 	private:
 		bool loaded_okay_{};
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;
-		Texture texture_;
+		Textures textures_;
 	};
 
 	using Models = std::vector<Model>;
