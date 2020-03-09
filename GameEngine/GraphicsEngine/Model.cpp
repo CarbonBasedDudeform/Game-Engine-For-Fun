@@ -6,58 +6,57 @@
 #include <iostream> //TODO: replace with actual logging service...
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "..\\..\\Externals\tinyobj_loader_opt.h"
-//#include "..\\..\\Externals\OBJ_Loader.h"
-//#include "..\\..\\Externals\OBJ_Loader.h"
-//#include <assimp/scene.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include "..\\..\\Externals\stb_image.h"
 #pragma warning(pop)
 
 namespace Graphics
 {
 	Model::Model(std::filesystem::path const& filename)
-	{
-		//objl::Loader loader;
-		//loaded_okay_ = loader.LoadFile(filename.string());
-		//for (auto& mesh : loader.LoadedMeshes)
-		//{
-		//	for (auto& v : mesh.Vertices)
-		//	{
-		//		vertices.emplace_back(Vertex{ v.Position.X, v.Position.Y, v.Position.Z });
-		//	}
-		//
-		//	for (auto& i : mesh.Indices)
-		//	{
-		//		indices.emplace_back(i);
-		//	}
-		//}
-		//auto verts = loader.LoadedVertices;
-		//for (auto& v : verts)
-		//{
-		//	vertices.emplace_back(Vertex{ v.Position.X, v.Position.Y, v.Position.Z });
-		//}
-		//
-		//indices = loader.LoadedIndices;
-		
+	{	
 		std::string warn;
 		std::string err;
-		tinyobj::attrib_t attribute_;
-		std::vector<tinyobj::shape_t> shapes_;
-		std::vector<tinyobj::material_t> materials_;
+		tinyobj::attrib_t attribute;
+		std::vector<tinyobj::shape_t> shapes;
+		std::vector<tinyobj::material_t> materials;
+		auto const mtl_path = filename.parent_path().string();
+		loaded_okay_ = tinyobj::LoadObj(&attribute, &shapes, &materials, &warn, &err, filename.string().c_str(), mtl_path.c_str());
+		
+		auto const parent = filename.parent_path();
 
-		loaded_okay_ = tinyobj::LoadObj(&attribute_, &shapes_, &materials_, &warn, &err, filename.string().c_str());
-
-		for (auto& shape : shapes_) {
-			for (auto& i : shape.mesh.indices) {
-				indices.push_back(indices.size());
-				vertices.push_back(Vertex{ attribute_.vertices[3*i.vertex_index + 0], 
-										   attribute_.vertices[3*i.vertex_index + 1], 
-										   attribute_.vertices[3*i.vertex_index + 2] });
-			}
+		for (auto& material : materials)
+		{
+			auto const texture_path = parent / std::filesystem::path{ material.diffuse_texname };
+			auto texture = std::make_shared<Material>();
+			texture->Data = stbi_load(texture_path.string().c_str(), &texture->Width, &texture->Height, &texture->Comp, STBI_rgb_alpha);
+			materials_[material.name] = std::move(texture);
 		}
 
-		//for (int i = 0; i < attribute_.vertices.size() - 3; i++)
-		//{
-		//	vertices.push_back(Vertex{ attribute_.vertices[i], attribute_.vertices[i + 1], attribute_.vertices[i + 2] });
-		//}
+		int count = 0;
+		for (auto& shape : shapes)
+		{
+			auto mesh = Mesh{};
+			mesh.id = count++;
+
+			for (auto& i : shape.mesh.indices) 
+			{
+				mesh.indices.push_back(mesh.indices.size());
+				mesh.vertices.push_back(Vertex{ attribute.vertices[3*i.vertex_index + 0], 
+										   attribute.vertices[3*i.vertex_index + 1], 
+										   attribute.vertices[3*i.vertex_index + 2],
+										   attribute.texcoords[2 * i.texcoord_index + 0],
+										   attribute.texcoords[2 * i.texcoord_index + 1]
+				});
+
+				int const texture_index = shape.mesh.material_ids[0]; //...not ideal
+				auto const material_name = materials[texture_index].name;
+				if (materials_.find(material_name) == materials_.end()) throw std::exception{"Trying to use non-existant material"};
+				mesh.texture = materials_[material_name];
+			}
+
+			meshes_.push_back(mesh);
+		}
+
 		
 		if (!warn.empty()) {
 			std::cout << warn << std::endl;
@@ -66,6 +65,9 @@ namespace Graphics
 		if (!err.empty()) {
 			std::cerr << err << std::endl;
 		}
+
+		auto const stem = filename.stem();
+		
 	}
 
 	bool Model::isOk() const
@@ -73,34 +75,8 @@ namespace Graphics
 		return loaded_okay_;
 	}
 
-	std::vector<Vertex> Model::getVertices() const
+	const Meshes& Model::getMeshes() const
 	{
-		return vertices;
+		return meshes_;
 	}
-
-
-	std::vector<unsigned int> Model::getIndices() const
-	{
-		return indices;
-	}
-
-	//std::vector<objl::Mesh> Model::getMesh() const
-	//{
-	//	return loader.LoadedMeshes;
-	//}
-
-	//Model::Shapes Model::getShapes() const
-	//{
-	//	return shapes_;
-	//}
-	//
-	//Model::Materials Model::getMaterials() const
-	//{
-	//	return materials_;
-	//}
-	//
-	//Model::Attribute Model::getAttribute() const
-	//{
-	//	return attribute_;
-	//}
 }

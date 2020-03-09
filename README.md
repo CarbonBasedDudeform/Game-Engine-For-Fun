@@ -2,6 +2,7 @@
 One of them game engines made for fun.
 
 Current state:
-renders an obj in wireframe
 
-![Image of wireframe utah teapot](https://pbs.twimg.com/media/EOxERt4WoAABiRz?format=png&name=small)
+loads obj + texture; renders obj textured
+
+![Image of textured utah teapot](https://pbs.twimg.com/media/ERt-KriXkAMGgwS?format=png&name=small)

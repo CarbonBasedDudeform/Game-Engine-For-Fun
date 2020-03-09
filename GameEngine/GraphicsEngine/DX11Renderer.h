@@ -7,38 +7,28 @@
 #include <d3dcompiler.h>
 #include <memory>
 #include <wrl/client.h>
+#include <map>
 #pragma warning(pop) //enable warnings again
+
+struct Renderable {
+	//std::vector<Vertex> vertices;
+	//std::vector<unsigned int> indicies;
+
+	ID3D11Buffer* vertices_buffer;
+	ID3D11Buffer* index_buffer;
+	UINT index_count;
+	ID3D11ShaderResourceView* texture_view;
+	ID3D11Texture2D* texture;
+};
+
+using Renderables = std::map<int, Renderable>; //<id, target>
 
 namespace Graphics
 {
-	//struct Color //todo: make do good.
-	//{
-	//	float r, g, b, a;
-	//};
-	//struct Vertex
-	//{
-	//	float x, y, z;
-	//};
-
-	//using Vertex = float;//objl::Vertex;//tinyobj::real_t;
-	//using Color = float[4];
-	//struct Vertex //todo: switch to directXMath and get dem SIMD benz
-	//{
-	//	float x, y, z;
-	//	Color color;
-	//};
-	//
-	//static Vertex OurVertices[] =
-	//{
-	//	{0.0f, 0.5f, 0.5f, {1.0f, 0.0f, 0.0f, 1.0f}},
-	//	{0.45f, -0.5, 0.5f, {0.0f, 1.0f, 0.0f, 1.0f}},
-	//	{-0.45f, -0.5f, 0.5f, {0.0f, 0.0f, 1.0f, 1.0f}}
-	//};
-
 	class DX11Renderer final : public IRenderer 
 	{
 	public:
-		DX11Renderer() noexcept = default;
+		DX11Renderer() = default;
 
 		virtual bool CreateContext(size_t height, size_t width, HWND windowHandle) final;
 		virtual void Render() final;
@@ -50,16 +40,12 @@ namespace Graphics
 
 	private:
 		
-
+		Renderables renderables_;
 		Microsoft::WRL::ComPtr<IDXGISwapChain> swap_chain_{};
 		ID3D11Device* device_{};
 		ID3D11DeviceContext* context_{};
 		ID3D11VertexShader* vertex_shader_{};
-		ID3D11Buffer* vertices_buffer_{};
-
-		ID3D11Buffer* index_buffer_{};
-		UINT index_count_{};
-
+		
 		ID3D11PixelShader* pixel_shader_{};
 
 		ID3D11DepthStencilView* depth_stencil_view_{};
@@ -68,11 +54,11 @@ namespace Graphics
 		ID3D11RenderTargetView* render_target_{};
 		ID3D11Texture2D* back_buffer_{};
 
-		std::vector<Vertex> vertices;
-		std::vector<unsigned int> indicies;
 		ID3D11InputLayout* input_layout;
-
+		
+		//shaders into a shader struct?
 		ID3DBlob* vertex_shader_blob;
 		ID3DBlob* pixel_shader_blob;
+
 	};
 }
