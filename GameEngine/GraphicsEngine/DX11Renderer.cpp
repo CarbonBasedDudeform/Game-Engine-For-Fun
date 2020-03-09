@@ -174,84 +174,91 @@ namespace Graphics
 	{
 		PreFrameRenderBehaviour();
 
-		for (auto& scene : scene_models_) {
+		for (auto& scene : scene_models_) 
+		{
 			for (auto& mesh : scene.getMeshes())
 			{
-				indicies = mesh.indices;
-				vertices = mesh.vertices;
-				index_count_ = indicies.size();
+				if (renderables_.find(mesh.id) == renderables_.end()) 
+				{
+					auto& new_renderable = renderables_[mesh.id];
+					new_renderable.index_count = mesh.indices.size();
 
-				//create vertex buffer
+					//create vertex buffer
 
-				D3D11_SUBRESOURCE_DATA vertex_buffer_sub_resource;
-				vertex_buffer_sub_resource.pSysMem = vertices.data();
+					D3D11_SUBRESOURCE_DATA vertex_buffer_sub_resource;
+					vertex_buffer_sub_resource.pSysMem = mesh.vertices.data();
 
-				D3D11_BUFFER_DESC buffer_desc;
-				ZeroMemory(&buffer_desc, sizeof(buffer_desc));
-				buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-				buffer_desc.ByteWidth = sizeof(Vertex) * vertices.size();
-				buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-				buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+					D3D11_BUFFER_DESC buffer_desc;
+					ZeroMemory(&buffer_desc, sizeof(buffer_desc));
+					buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+					buffer_desc.ByteWidth = sizeof(Vertex) * mesh.vertices.size();
+					buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+					buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-				device_->CreateBuffer(&buffer_desc, &vertex_buffer_sub_resource, &vertices_buffer_);
+					device_->CreateBuffer(&buffer_desc, &vertex_buffer_sub_resource, &new_renderable.vertices_buffer);
 
-				//create index buffer
+					//create index buffer
 
-				D3D11_SUBRESOURCE_DATA index_buffer_sub_resource;
-				index_buffer_sub_resource.pSysMem = indicies.data();
+					D3D11_SUBRESOURCE_DATA index_buffer_sub_resource;
+					index_buffer_sub_resource.pSysMem = mesh.indices.data();
 
-				D3D11_BUFFER_DESC index_buffer_desc;
-				ZeroMemory(&index_buffer_desc, sizeof(index_buffer_desc));
-				index_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-				index_buffer_desc.ByteWidth = sizeof(indicies[0]) * index_count_;
-				index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-				index_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+					D3D11_BUFFER_DESC index_buffer_desc;
+					ZeroMemory(&index_buffer_desc, sizeof(index_buffer_desc));
+					index_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+					index_buffer_desc.ByteWidth = sizeof(mesh.indices[0]) * new_renderable.index_count;
+					index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+					index_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-				device_->CreateBuffer(&index_buffer_desc, &index_buffer_sub_resource, &index_buffer_);
+					device_->CreateBuffer(&index_buffer_desc, &index_buffer_sub_resource, &new_renderable.index_buffer);
 
+					
+
+					auto& texture = mesh.texture;
+
+					if (texture->Data) {
+
+
+						D3D11_TEXTURE2D_DESC texDesc;
+						//if i forget this i am a horrible, horrible little gremlin.
+						texDesc.Height = texture->Height;
+						texDesc.Width = texture->Width;
+						texDesc.MipLevels = 0;
+						texDesc.ArraySize = 1;
+						texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+						texDesc.SampleDesc.Count = 1;
+						texDesc.SampleDesc.Quality = 0;
+						texDesc.Usage = D3D11_USAGE_DEFAULT;
+						texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+						texDesc.CPUAccessFlags = 0;
+						texDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+						auto hr = device_->CreateTexture2D(&texDesc, NULL, &new_renderable.texture);
+						if (hr != S_OK) throw std::exception{};
+
+						auto rowPitch = (texture->Width * 4) * sizeof(unsigned char);
+						context_->UpdateSubresource(new_renderable.texture, 0, NULL, texture->Data, rowPitch, 0);
+						D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+						srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+						srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+						srvDesc.Texture2D.MostDetailedMip = 0;
+						srvDesc.Texture2D.MipLevels = 1;
+
+						device_->CreateShaderResourceView(new_renderable.texture, &srvDesc, &new_renderable.texture_view);
+						context_->GenerateMips(new_renderable.texture_view);
+					}
+				}
+
+				auto& to_render = renderables_[mesh.id];
+				
 				auto const stride = UINT{ sizeof(Vertex) };
 				auto const offset = UINT{ 0 };
-				context_->IASetVertexBuffers(0, 1, &vertices_buffer_, &stride, &offset);
-				context_->IASetIndexBuffer(index_buffer_, DXGI_FORMAT_R32_UINT, 0);
+				context_->IASetVertexBuffers(0, 1, &to_render.vertices_buffer, &stride, &offset);
+				context_->IASetIndexBuffer(to_render.index_buffer, DXGI_FORMAT_R32_UINT, 0);
 				context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-				auto& texture = mesh.texture;
+				context_->PSSetShaderResources(0, 1, &to_render.texture_view);
 
-				if (texture->Data) {
-					ID3D11ShaderResourceView* m_textureView;
-
-					ID3D11Texture2D* m_texture;
-
-					D3D11_TEXTURE2D_DESC texDesc;
-					//if i forget this i am a horrible, horrible little gremlin.
-					texDesc.Height = texture->Height;
-					texDesc.Width = texture->Width;
-					texDesc.MipLevels = 0;
-					texDesc.ArraySize = 1;
-					texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-					texDesc.SampleDesc.Count = 1;
-					texDesc.SampleDesc.Quality = 0;
-					texDesc.Usage = D3D11_USAGE_DEFAULT;
-					texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-					texDesc.CPUAccessFlags = 0;
-					texDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
-
-					auto hr = device_->CreateTexture2D(&texDesc, NULL, &m_texture);
-					if (hr != S_OK) throw std::exception{};
-
-					auto rowPitch = (texture->Width * 4) * sizeof(unsigned char);
-					context_->UpdateSubresource(m_texture, 0, NULL, texture->Data, rowPitch, 0);
-					D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-					srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-					srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-					srvDesc.Texture2D.MostDetailedMip = 0;
-					srvDesc.Texture2D.MipLevels = 1;
-
-					device_->CreateShaderResourceView(m_texture, &srvDesc, &m_textureView);
-					context_->GenerateMips(m_textureView);
-					context_->PSSetShaderResources(0, 1, &m_textureView);
-				}
-				context_->DrawIndexed(index_count_, 0, 0);
+				context_->DrawIndexed(to_render.index_count, 0, 0);
 			}
 		}
 		

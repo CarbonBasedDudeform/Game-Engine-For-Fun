@@ -32,9 +32,11 @@ namespace Graphics
 			materials_[material.name] = std::move(texture);
 		}
 
+		int count = 0;
 		for (auto& shape : shapes)
 		{
 			auto mesh = Mesh{};
+			mesh.id = count++;
 
 			for (auto& i : shape.mesh.indices) 
 			{
