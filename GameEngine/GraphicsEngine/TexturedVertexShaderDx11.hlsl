@@ -1,5 +1,6 @@
 cbuffer WorldViewProjection {
 	float4 position;
+	float4x4 rotation;
 };
 
 struct VertexInput
@@ -18,7 +19,7 @@ PixelInput main(VertexInput input)
 {
 	PixelInput output;
 
-	output.position = input.position + position;
+	output.position = mul(input.position, rotation) + position;
 	output.tex = input.tex;
 	return output;
 }

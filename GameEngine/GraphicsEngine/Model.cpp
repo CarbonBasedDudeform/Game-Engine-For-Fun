@@ -66,8 +66,7 @@ namespace Graphics
 			std::cerr << err << std::endl;
 		}
 
-		auto const stem = filename.stem();
-		
+		constant_buffer.rotation = makeRotationMatrixUsingRadians(3.14/3.0 * 2);
 	}
 
 	bool Model::isOk() const
@@ -78,5 +77,15 @@ namespace Graphics
 	const Meshes& Model::getMeshes() const
 	{
 		return meshes_;
+	}
+
+	Rotation makeRotationMatrixUsingRadians(float amount) noexcept
+	{
+			return {
+				{ cos(amount),0, -sin(amount), 0},
+				{ 0         ,1,           0, 0},
+				{sin(amount) ,0,  cos(amount), 0},
+				{ 0         ,0,           0, 1}
+			};
 	}
 }

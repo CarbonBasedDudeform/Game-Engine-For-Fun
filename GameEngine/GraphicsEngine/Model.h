@@ -9,8 +9,27 @@
 
 namespace Graphics
 {
+	struct Vector {
+		float x, y, z;
+	};
+	
 	struct Point {
 		float x, y, z, w;
+	};
+
+	struct Rotation {
+		Point x,y,z,w;
+	};
+
+	//using Rotation = std::array<std::array<float, 4>, 4>;
+
+	Rotation makeRotationMatrixUsingRadians(float angle) noexcept;
+
+	
+
+	struct ConstantBuffer {
+		Point position;
+		Rotation rotation;
 	};
 
 	struct Vertex
@@ -47,7 +66,11 @@ namespace Graphics
 
 		bool isOk() const;
 		const Meshes& getMeshes() const;
-		Point position{ 0, -0.5f, 0 , 0};
+		ConstantBuffer constant_buffer{
+			{ 0, -0.5f, 0 , 0},
+			{}
+		};
+
 	private:
 		bool loaded_okay_{};
 		Meshes meshes_;

@@ -135,16 +135,16 @@ namespace Graphics
 		context_->IASetInputLayout(input_layout);
 
 		//set raster state
-		D3D11_RASTERIZER_DESC raster_desc;
-		ZeroMemory(&raster_desc, sizeof(raster_desc));
-		raster_desc.CullMode = D3D11_CULL_BACK;
-		//raster_desc.DepthClipEnable = true;
-		raster_desc.FrontCounterClockwise = false;
-		raster_desc.FillMode = D3D11_FILL_SOLID;
+		//D3D11_RASTERIZER_DESC raster_desc;
+		//ZeroMemory(&raster_desc, sizeof(raster_desc));
+		//raster_desc.CullMode = D3D11_CULL_FRONT;
+		////raster_desc.DepthClipEnable = true;
+		//raster_desc.FrontCounterClockwise = false;
+		//raster_desc.FillMode = D3D11_FILL_SOLID;
 		
-		ID3D11RasterizerState* raster_state;
-		device_->CreateRasterizerState(&raster_desc, &raster_state);
-		context_->RSSetState(raster_state);
+		//ID3D11RasterizerState* raster_state;
+		//device_->CreateRasterizerState(&raster_desc, &raster_state);
+		//context_->RSSetState(raster_state);
 
 		return true;
 	}
@@ -248,12 +248,12 @@ namespace Graphics
 
 						{
 							D3D11_BUFFER_DESC cbd{ 0 }; 
-							cbd.ByteWidth = 16;
+							cbd.ByteWidth = 16+64;
 							cbd.Usage = D3D11_USAGE_DEFAULT;
 							cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 
 							device_->CreateBuffer(&cbd, 0, &new_renderable.constant_buffer);
-							context_->UpdateSubresource(new_renderable.constant_buffer, 0, 0, &cur_model.position, 0, 0);
+							context_->UpdateSubresource(new_renderable.constant_buffer, 0, 0, &cur_model.constant_buffer, 0, 0);
 						}
 					}
 				}
