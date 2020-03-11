@@ -272,6 +272,24 @@ namespace Graphics
 		device_->CreateBuffer(&cbd, 0, constant_buffer);
 	}
 
+	void DX11Renderer::setupNewMesh(const Mesh& const mesh)
+	{
+		auto& new_renderable = renderables_[mesh.id];
+		new_renderable.index_count = mesh.indices.size();
+
+		createVertexBuffer(&new_renderable.vertices_buffer, mesh.vertices);
+		createIndicesBuffer(&new_renderable.index_buffer, mesh.indices);
+
+		auto& texture = mesh.texture;
+		bool const texture_exists = texture && texture->Data;
+		if (texture_exists)
+		{
+			createTexture(&new_renderable.texture, &new_renderable.texture_view, *mesh.texture);
+		}
+
+		createConstantBuffer(&new_renderable.constant_buffer);
+	}
+
 	void DX11Renderer::Render()
 	{
 		PreFrameRenderBehaviour();
@@ -280,22 +298,10 @@ namespace Graphics
 		{
 			for (auto& mesh : cur_model.getMeshes())
 			{
-				if (renderables_.find(mesh.id) == renderables_.end()) 
+				bool const mesh_is_fresh = renderables_.find(mesh.id) == renderables_.end();
+				if (mesh_is_fresh) 
 				{
-					auto& new_renderable = renderables_[mesh.id];
-					new_renderable.index_count = mesh.indices.size();
-
-					createVertexBuffer(&new_renderable.vertices_buffer, mesh.vertices);
-					createIndicesBuffer(&new_renderable.index_buffer, mesh.indices);
-
-					auto& texture = mesh.texture;
-					bool const texture_exists = texture && texture->Data;
-					if (texture_exists) 
-					{
-						createTexture(&new_renderable.texture, &new_renderable.texture_view, *mesh.texture);
-					}
-
-					createConstantBuffer(&new_renderable.constant_buffer);
+					setupNewMesh(mesh);
 				}
 
 				auto& to_render = renderables_[mesh.id];

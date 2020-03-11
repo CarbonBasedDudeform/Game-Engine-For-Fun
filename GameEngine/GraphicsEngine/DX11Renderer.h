@@ -49,6 +49,7 @@ namespace Graphics
 		void createIndicesBuffer(ID3D11Buffer** buffer, const std::vector<unsigned int>& indices);
 		void createTexture(ID3D11Texture2D** texture, ID3D11ShaderResourceView** texture_view, const Material& const material);
 		void createConstantBuffer(ID3D11Buffer** constant_buffer);
+		void setupNewMesh(const Mesh& const mesh);
 
 	private:
 		
