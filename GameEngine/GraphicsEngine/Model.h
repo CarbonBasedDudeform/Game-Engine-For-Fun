@@ -9,10 +9,13 @@
 
 namespace Graphics
 {
+	struct Point {
+		float x, y, z, w;
+	};
+
 	struct Vertex
 	{
 		float x, y, z, u, v;
-		int texutre_index;
 	};
 	
 	using ImageData = unsigned char*;
@@ -44,7 +47,7 @@ namespace Graphics
 
 		bool isOk() const;
 		const Meshes& getMeshes() const;
-
+		Point position{ 0, -0.5f, 0 , 0};
 	private:
 		bool loaded_okay_{};
 		Meshes meshes_;

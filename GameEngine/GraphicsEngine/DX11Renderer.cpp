@@ -174,9 +174,9 @@ namespace Graphics
 	{
 		PreFrameRenderBehaviour();
 
-		for (auto& scene : scene_models_) 
+		for (auto& cur_model : scene_models_) 
 		{
-			for (auto& mesh : scene.getMeshes())
+			for (auto& mesh : cur_model.getMeshes())
 			{
 				if (renderables_.find(mesh.id) == renderables_.end()) 
 				{
@@ -245,6 +245,16 @@ namespace Graphics
 
 						device_->CreateShaderResourceView(new_renderable.texture, &srvDesc, &new_renderable.texture_view);
 						context_->GenerateMips(new_renderable.texture_view);
+
+						{
+							D3D11_BUFFER_DESC cbd{ 0 }; 
+							cbd.ByteWidth = 16;
+							cbd.Usage = D3D11_USAGE_DEFAULT;
+							cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+							device_->CreateBuffer(&cbd, 0, &new_renderable.constant_buffer);
+							context_->UpdateSubresource(new_renderable.constant_buffer, 0, 0, &cur_model.position, 0, 0);
+						}
 					}
 				}
 
@@ -252,6 +262,8 @@ namespace Graphics
 				
 				auto const stride = UINT{ sizeof(Vertex) };
 				auto const offset = UINT{ 0 };
+
+				context_->VSSetConstantBuffers(0, 1, &to_render.constant_buffer);
 				context_->IASetVertexBuffers(0, 1, &to_render.vertices_buffer, &stride, &offset);
 				context_->IASetIndexBuffer(to_render.index_buffer, DXGI_FORMAT_R32_UINT, 0);
 				context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

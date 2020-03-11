@@ -10,15 +10,21 @@
 #include <map>
 #pragma warning(pop) //enable warnings again
 
-struct Renderable {
-	//std::vector<Vertex> vertices;
-	//std::vector<unsigned int> indicies;
+using Matrix = float[4][4];
 
+
+
+struct WorldViewProject {
+	
+};
+
+struct Renderable {
 	ID3D11Buffer* vertices_buffer;
 	ID3D11Buffer* index_buffer;
 	UINT index_count;
 	ID3D11ShaderResourceView* texture_view;
 	ID3D11Texture2D* texture;
+	ID3D11Buffer* constant_buffer;
 };
 
 using Renderables = std::map<int, Renderable>; //<id, target>
