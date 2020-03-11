@@ -67,7 +67,7 @@ namespace Graphics
 		bool isOk() const;
 		const Meshes& getMeshes() const;
 		ConstantBuffer constant_buffer{
-			{ 0, -0.5f, 0 , 0},
+			{ 0, -0.5f, 1.0f , 0},
 			{}
 		};
 

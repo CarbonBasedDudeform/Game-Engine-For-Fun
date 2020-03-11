@@ -45,6 +45,12 @@ namespace Graphics
 		virtual void SetModelsToRender(Models const& models) final;
 
 	private:
+		void createVertexBuffer(ID3D11Buffer** buffer, const std::vector<Vertex>& vertices);
+		void createIndicesBuffer(ID3D11Buffer** buffer, const std::vector<unsigned int>& indices);
+		void createTexture(ID3D11Texture2D** texture, ID3D11ShaderResourceView** texture_view, const Material& const material);
+		void createConstantBuffer(ID3D11Buffer** constant_buffer);
+
+	private:
 		
 		Renderables renderables_;
 		Microsoft::WRL::ComPtr<IDXGISwapChain> swap_chain_{};

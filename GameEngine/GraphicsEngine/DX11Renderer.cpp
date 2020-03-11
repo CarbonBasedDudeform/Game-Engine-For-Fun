@@ -127,6 +127,7 @@ namespace Graphics
 
 		// Set up the depth stencil view description.
 		depthStencilViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		
 		depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 		depthStencilViewDesc.Texture2D.MipSlice = 0;
 
@@ -171,11 +172,11 @@ namespace Graphics
 		//set raster state
 		//D3D11_RASTERIZER_DESC raster_desc;
 		//ZeroMemory(&raster_desc, sizeof(raster_desc));
-		//raster_desc.CullMode = D3D11_CULL_FRONT;
+		//raster_desc.CullMode = D3D11_CULL_BACK;
 		////raster_desc.DepthClipEnable = true;
 		//raster_desc.FrontCounterClockwise = false;
 		//raster_desc.FillMode = D3D11_FILL_SOLID;
-		
+		//
 		//ID3D11RasterizerState* raster_state;
 		//device_->CreateRasterizerState(&raster_desc, &raster_state);
 		//context_->RSSetState(raster_state);
@@ -200,6 +201,77 @@ namespace Graphics
 		IRenderer::SetModelsToRender(models);
 	}
 
+	void DX11Renderer::createVertexBuffer(ID3D11Buffer** buffer, const std::vector<Vertex>& vertices)
+	{
+		D3D11_SUBRESOURCE_DATA vertex_buffer_sub_resource;
+		vertex_buffer_sub_resource.pSysMem = vertices.data();
+
+		D3D11_BUFFER_DESC buffer_desc;
+		ZeroMemory(&buffer_desc, sizeof(buffer_desc));
+		buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+		buffer_desc.ByteWidth = sizeof(Vertex) * vertices.size();
+		buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+		device_->CreateBuffer(&buffer_desc, &vertex_buffer_sub_resource, buffer);
+	}
+
+	void DX11Renderer::createIndicesBuffer(ID3D11Buffer** buffer, const std::vector<unsigned int>& indices)
+	{
+		D3D11_SUBRESOURCE_DATA index_buffer_sub_resource;
+		index_buffer_sub_resource.pSysMem = indices.data();
+
+		D3D11_BUFFER_DESC index_buffer_desc;
+		ZeroMemory(&index_buffer_desc, sizeof(index_buffer_desc));
+		index_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+		index_buffer_desc.ByteWidth = sizeof(indices[0]) * indices.size();
+		index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+		index_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+		device_->CreateBuffer(&index_buffer_desc, &index_buffer_sub_resource, buffer);
+	}
+
+	void DX11Renderer::createTexture(ID3D11Texture2D** texture, ID3D11ShaderResourceView** texture_view, const Material& const material)
+	{
+		D3D11_TEXTURE2D_DESC texDesc;
+		//if i forget this i am a horrible, horrible little gremlin.
+		texDesc.Height = material.Height;
+		texDesc.Width = material.Width;
+		texDesc.MipLevels = 0;
+		texDesc.ArraySize = 1;
+		texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		texDesc.SampleDesc.Count = 1;
+		texDesc.SampleDesc.Quality = 0;
+		texDesc.Usage = D3D11_USAGE_DEFAULT;
+		texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+		texDesc.CPUAccessFlags = 0;
+		texDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+		auto hr = device_->CreateTexture2D(&texDesc, NULL, texture);
+		if (hr != S_OK) throw std::exception{};
+
+		auto rowPitch = (material.Width * 4) * sizeof(unsigned char);
+		context_->UpdateSubresource(*texture, 0, NULL, material.Data, rowPitch, 0);
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+		srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MostDetailedMip = 0;
+		srvDesc.Texture2D.MipLevels = 1;
+
+		device_->CreateShaderResourceView(*texture, &srvDesc, texture_view);
+		context_->GenerateMips(*texture_view);
+	}
+
+	void DX11Renderer::createConstantBuffer(ID3D11Buffer** constant_buffer)
+	{
+		D3D11_BUFFER_DESC cbd{ 0 };
+		cbd.ByteWidth = 16 + 64;
+		cbd.Usage = D3D11_USAGE_DEFAULT;
+		cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+		device_->CreateBuffer(&cbd, 0, constant_buffer);
+	}
+
 	void DX11Renderer::Render()
 	{
 		PreFrameRenderBehaviour();
@@ -213,81 +285,17 @@ namespace Graphics
 					auto& new_renderable = renderables_[mesh.id];
 					new_renderable.index_count = mesh.indices.size();
 
-					//create vertex buffer
-
-					D3D11_SUBRESOURCE_DATA vertex_buffer_sub_resource;
-					vertex_buffer_sub_resource.pSysMem = mesh.vertices.data();
-
-					D3D11_BUFFER_DESC buffer_desc;
-					ZeroMemory(&buffer_desc, sizeof(buffer_desc));
-					buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-					buffer_desc.ByteWidth = sizeof(Vertex) * mesh.vertices.size();
-					buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-					buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-					device_->CreateBuffer(&buffer_desc, &vertex_buffer_sub_resource, &new_renderable.vertices_buffer);
-
-					//create index buffer
-
-					D3D11_SUBRESOURCE_DATA index_buffer_sub_resource;
-					index_buffer_sub_resource.pSysMem = mesh.indices.data();
-
-					D3D11_BUFFER_DESC index_buffer_desc;
-					ZeroMemory(&index_buffer_desc, sizeof(index_buffer_desc));
-					index_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-					index_buffer_desc.ByteWidth = sizeof(mesh.indices[0]) * new_renderable.index_count;
-					index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-					index_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-					device_->CreateBuffer(&index_buffer_desc, &index_buffer_sub_resource, &new_renderable.index_buffer);
-
-					
+					createVertexBuffer(&new_renderable.vertices_buffer, mesh.vertices);
+					createIndicesBuffer(&new_renderable.index_buffer, mesh.indices);
 
 					auto& texture = mesh.texture;
-
-					if (texture && texture->Data) {
-
-
-						D3D11_TEXTURE2D_DESC texDesc;
-						//if i forget this i am a horrible, horrible little gremlin.
-						texDesc.Height = texture->Height;
-						texDesc.Width = texture->Width;
-						texDesc.MipLevels = 0;
-						texDesc.ArraySize = 1;
-						texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-						texDesc.SampleDesc.Count = 1;
-						texDesc.SampleDesc.Quality = 0;
-						texDesc.Usage = D3D11_USAGE_DEFAULT;
-						texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-						texDesc.CPUAccessFlags = 0;
-						texDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
-
-						auto hr = device_->CreateTexture2D(&texDesc, NULL, &new_renderable.texture);
-						if (hr != S_OK) throw std::exception{};
-
-						auto rowPitch = (texture->Width * 4) * sizeof(unsigned char);
-						context_->UpdateSubresource(new_renderable.texture, 0, NULL, texture->Data, rowPitch, 0);
-						D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-						srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-						srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-						srvDesc.Texture2D.MostDetailedMip = 0;
-						srvDesc.Texture2D.MipLevels = 1;
-
-						device_->CreateShaderResourceView(new_renderable.texture, &srvDesc, &new_renderable.texture_view);
-						context_->GenerateMips(new_renderable.texture_view);
-
-						
-					}
-
+					bool const texture_exists = texture && texture->Data;
+					if (texture_exists) 
 					{
-						D3D11_BUFFER_DESC cbd{ 0 };
-						cbd.ByteWidth = 16 + 64;
-						cbd.Usage = D3D11_USAGE_DEFAULT;
-						cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-
-						device_->CreateBuffer(&cbd, 0, &new_renderable.constant_buffer);
-
+						createTexture(&new_renderable.texture, &new_renderable.texture_view, *mesh.texture);
 					}
+
+					createConstantBuffer(&new_renderable.constant_buffer);
 				}
 
 				auto& to_render = renderables_[mesh.id];

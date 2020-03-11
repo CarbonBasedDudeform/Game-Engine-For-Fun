@@ -55,7 +55,9 @@ namespace Graphics
 				if (textures_arent_used) continue;
 
 				auto const material_name = materials[texture_index].name;
-				if (materials_.find(material_name) == materials_.end()) throw std::exception{"Trying to use non-existant material"};
+				bool const material_doesnt_exist = materials_.find(material_name) == materials_.end();
+				if (material_doesnt_exist) throw std::exception{"Trying to use non-existant material"};
+				
 				mesh.texture = materials_[material_name];
 			}
 
