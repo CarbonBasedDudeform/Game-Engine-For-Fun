@@ -71,6 +71,8 @@ namespace Graphics
 			{}
 		};
 
+		float rotation{};
+
 	private:
 		bool loaded_okay_{};
 		Meshes meshes_;

@@ -40,15 +40,20 @@ namespace Graphics
 
 			for (auto& i : shape.mesh.indices) 
 			{
+				//attribute.vertices[3 * i.vertex_index + 2];
 				mesh.indices.push_back(mesh.indices.size());
+				bool const texture_coords_exist = i.texcoord_index != -1;
 				mesh.vertices.push_back(Vertex{ attribute.vertices[3*i.vertex_index + 0], 
-										   attribute.vertices[3*i.vertex_index + 1], 
-										   attribute.vertices[3*i.vertex_index + 2],
-										   attribute.texcoords[2 * i.texcoord_index + 0],
-										   attribute.texcoords[2 * i.texcoord_index + 1]
+												attribute.vertices[3*i.vertex_index + 1], 
+												attribute.vertices[3*i.vertex_index + 2],
+												texture_coords_exist ? attribute.texcoords[2 * i.texcoord_index + 0] : 0,
+												texture_coords_exist ? attribute.texcoords[2 * i.texcoord_index + 1] : 0
 				});
 
 				int const texture_index = shape.mesh.material_ids[0]; //...not ideal
+				bool const textures_arent_used = texture_index < 0;
+				if (textures_arent_used) continue;
+
 				auto const material_name = materials[texture_index].name;
 				if (materials_.find(material_name) == materials_.end()) throw std::exception{"Trying to use non-existant material"};
 				mesh.texture = materials_[material_name];

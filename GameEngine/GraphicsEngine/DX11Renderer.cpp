@@ -56,7 +56,7 @@ namespace Graphics
 
 		DXGI_SWAP_CHAIN_DESC swap_chain_desc;
 		ZeroMemory(&swap_chain_desc, sizeof(swap_chain_desc));
-		swap_chain_desc.SampleDesc.Count = 4;
+		swap_chain_desc.SampleDesc.Count = 1;
 		//swapChainDesc.SampleDesc.Quality = 0;// qualityLevels[0];
 		swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
@@ -82,24 +82,58 @@ namespace Graphics
 		device_->CreateRenderTargetView(back_buffer_, nullptr, &render_target_);
 		back_buffer_->Release();
 		
-		//D3D11_TEXTURE2D_DESC depthStencilDesc;
-		//ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
-		//depthStencilDesc.Width = width;
-		//depthStencilDesc.Height = height;
-		//depthStencilDesc.MipLevels = 1;
-		//depthStencilDesc.ArraySize = 1;
-		//depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-		//depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-		//depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
-		//depthStencilDesc.SampleDesc.Count = 1;
-		//depthStencilDesc.SampleDesc.Quality = 0;
-		//
-		//device_->CreateTexture2D(&depthStencilDesc, nullptr,&depth_stencil_buffer_);
-		//device_->CreateDepthStencilView(depth_stencil_buffer_, nullptr, &depth_stencil_view_);
-		//
-		//
-		//context_->OMSetRenderTargets(1, &render_target_, depth_stencil_view_);
-		context_->OMSetRenderTargets(1, &render_target_, nullptr);
+		D3D11_TEXTURE2D_DESC depthStencilTextureDesc;
+		ZeroMemory(&depthStencilTextureDesc, sizeof(depthStencilTextureDesc));
+		depthStencilTextureDesc.Width = width;
+		depthStencilTextureDesc.Height = height;
+		depthStencilTextureDesc.MipLevels = 1;
+		depthStencilTextureDesc.ArraySize = 1;
+		depthStencilTextureDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		depthStencilTextureDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+		depthStencilTextureDesc.Usage = D3D11_USAGE_DEFAULT;
+		depthStencilTextureDesc.SampleDesc.Count = 1;
+		depthStencilTextureDesc.SampleDesc.Quality = 0;
+		depthStencilTextureDesc.CPUAccessFlags = 0;
+		depthStencilTextureDesc.MiscFlags = 0;
+		
+		device_->CreateTexture2D(&depthStencilTextureDesc, nullptr,&depth_stencil_buffer_);
+
+		
+		D3D11_DEPTH_STENCIL_DESC depthStencilDesc;
+		ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
+
+		depthStencilDesc.DepthEnable = true;
+		depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+		depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
+		
+		depthStencilDesc.StencilEnable = true;
+		depthStencilDesc.StencilReadMask = 0xFF;
+		depthStencilDesc.StencilWriteMask = 0xFF;
+		
+		depthStencilDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+		depthStencilDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
+		depthStencilDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+		depthStencilDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+		
+		depthStencilDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+		depthStencilDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
+		depthStencilDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+
+		device_->CreateDepthStencilState(&depthStencilDesc, &depthStencilState_);
+		context_->OMSetDepthStencilState(depthStencilState_, 1);
+
+		D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
+		ZeroMemory(&depthStencilViewDesc, sizeof(depthStencilViewDesc));
+
+		// Set up the depth stencil view description.
+		depthStencilViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+		depthStencilViewDesc.Texture2D.MipSlice = 0;
+
+		device_->CreateDepthStencilView(depth_stencil_buffer_, &depthStencilViewDesc, &depth_stencil_view_);
+		
+		
+		context_->OMSetRenderTargets(1, &render_target_, depth_stencil_view_);
 
 		D3D11_VIEWPORT viewport;
 		ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));
@@ -153,6 +187,7 @@ namespace Graphics
 	{
 		static float const color[]{ 0.0f, 0.2f, 0.4f, 1.0f };
 		context_->ClearRenderTargetView(render_target_, color);
+		context_->ClearDepthStencilView(depth_stencil_view_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	}
 
 	void DX11Renderer::PostFrameRenderBehaviour()
@@ -163,11 +198,6 @@ namespace Graphics
 	void DX11Renderer::SetModelsToRender(Models const& models)
 	{
 		IRenderer::SetModelsToRender(models);
-
-		//if there is nothing, then bye bye
-		if (models.empty()) return;
-
-
 	}
 
 	void DX11Renderer::Render()
@@ -215,7 +245,7 @@ namespace Graphics
 
 					auto& texture = mesh.texture;
 
-					if (texture->Data) {
+					if (texture && texture->Data) {
 
 
 						D3D11_TEXTURE2D_DESC texDesc;
@@ -246,15 +276,17 @@ namespace Graphics
 						device_->CreateShaderResourceView(new_renderable.texture, &srvDesc, &new_renderable.texture_view);
 						context_->GenerateMips(new_renderable.texture_view);
 
-						{
-							D3D11_BUFFER_DESC cbd{ 0 }; 
-							cbd.ByteWidth = 16+64;
-							cbd.Usage = D3D11_USAGE_DEFAULT;
-							cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+						
+					}
 
-							device_->CreateBuffer(&cbd, 0, &new_renderable.constant_buffer);
-							context_->UpdateSubresource(new_renderable.constant_buffer, 0, 0, &cur_model.constant_buffer, 0, 0);
-						}
+					{
+						D3D11_BUFFER_DESC cbd{ 0 };
+						cbd.ByteWidth = 16 + 64;
+						cbd.Usage = D3D11_USAGE_DEFAULT;
+						cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+						device_->CreateBuffer(&cbd, 0, &new_renderable.constant_buffer);
+
 					}
 				}
 
@@ -263,12 +295,16 @@ namespace Graphics
 				auto const stride = UINT{ sizeof(Vertex) };
 				auto const offset = UINT{ 0 };
 
+				cur_model.constant_buffer.rotation = makeRotationMatrixUsingRadians(cur_model.rotation);
+				context_->UpdateSubresource(to_render.constant_buffer, 0, 0, &cur_model.constant_buffer, 0, 0);
+				cur_model.rotation = cur_model.rotation + 0.0001f;
+
 				context_->VSSetConstantBuffers(0, 1, &to_render.constant_buffer);
 				context_->IASetVertexBuffers(0, 1, &to_render.vertices_buffer, &stride, &offset);
 				context_->IASetIndexBuffer(to_render.index_buffer, DXGI_FORMAT_R32_UINT, 0);
 				context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-				context_->PSSetShaderResources(0, 1, &to_render.texture_view);
+				if (to_render.texture_view) context_->PSSetShaderResources(0, 1, &to_render.texture_view);
 
 				context_->DrawIndexed(to_render.index_count, 0, 0);
 			}

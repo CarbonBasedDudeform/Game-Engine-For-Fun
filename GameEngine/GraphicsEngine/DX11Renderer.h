@@ -66,5 +66,6 @@ namespace Graphics
 		ID3DBlob* vertex_shader_blob;
 		ID3DBlob* pixel_shader_blob;
 
+		ID3D11DepthStencilState* depthStencilState_;
 	};
 }
