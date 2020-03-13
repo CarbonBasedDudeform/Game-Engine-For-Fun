@@ -265,7 +265,7 @@ namespace Graphics
 	void DX11Renderer::createConstantBuffer(ID3D11Buffer** constant_buffer)
 	{
 		D3D11_BUFFER_DESC cbd{ 0 };
-		cbd.ByteWidth = 16 + 64;
+		cbd.ByteWidth = 16 + 64; //sizeof(constant buffer struct) ??
 		cbd.Usage = D3D11_USAGE_DEFAULT;
 		cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 
