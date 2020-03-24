@@ -1,5 +1,15 @@
 #include "Window.h"
 #include "DX11Renderer.h"
+#include <gainput\gainput.h>
+
+enum Button
+{
+	Down,
+	Up,
+	Left,
+	Right
+};
+
 
 namespace Graphics
 {
@@ -23,6 +33,9 @@ namespace Graphics
 		ShowWindow(window_handle_, SW_SHOW);
 		UpdateWindow(window_handle_);
 		renderer_->CreateContext(height, width, window_handle_);
+
+
+		
 	}
 
 	LRESULT Window::WndProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam)
@@ -51,16 +64,59 @@ namespace Graphics
 		MSG msg;
 		ZeroMemory(&msg, sizeof(msg));
 
+		gainput::InputManager manager;
+		
+		manager.SetDisplaySize(800,600);
+		const gainput::DeviceId keyboardId = manager.CreateDevice<gainput::InputDeviceKeyboard>();
+		const gainput::DeviceId mouseId = manager.CreateDevice<gainput::InputDeviceMouse>();
+		const gainput::DeviceId padId = manager.CreateDevice<gainput::InputDevicePad>();
+		const gainput::DeviceId touchId = manager.CreateDevice<gainput::InputDeviceTouch>();
+
+		//map.GetManager
+		auto map = gainput::InputMap(manager);
+		map.MapBool(Down, keyboardId, gainput::KeyS);
+		map.MapBool(Up, keyboardId, gainput::KeyW);
+		map.MapBool(Left, keyboardId, gainput::KeyA);
+		map.MapBool(Right, keyboardId, gainput::KeyD);
+
 		while (msg.message != WM_QUIT)
 		{
+
+			manager.Update();
 			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 			{
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
+				manager.HandleMessage(msg);
 			}
 			
 			{
-				update_func_();
+				//update_func_();
+
+				if (map.GetBool(Down))
+				{
+					eye_.z -= 0.001f;
+					renderer_->MoveEye(eye_);
+				}
+
+				if (map.GetBool(Up))
+				{
+					eye_.z += 0.001f;
+					renderer_->MoveEye(eye_);
+				}
+
+				if (map.GetBool(Left))
+				{
+					eye_.x -= 0.001f;
+					renderer_->MoveEye(eye_);
+				}
+
+				if (map.GetBool(Right))
+				{
+					eye_.x += 0.001f;
+					renderer_->MoveEye(eye_);
+				}
+
 				renderer_->Render();
 			}
 		}

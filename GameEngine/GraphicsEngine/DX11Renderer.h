@@ -11,7 +11,8 @@
 #include <map>
 #pragma warning(pop) //enable warnings again
 
-using Matrix = float[4][4];
+//#include <gainput\gainput.h>
+//using Matrix = float[4][4];
 
 
 
@@ -44,6 +45,7 @@ namespace Graphics
 		virtual void PreFrameRenderBehaviour() final;
 		virtual void PostFrameRenderBehaviour() final;
 		virtual void SetModelsToRender(Models const& models) final;
+		void MoveEye(const EyePos& pos) final;
 
 	private:
 		void createVertexBuffer(ID3D11Buffer** buffer, const std::vector<Vertex>& vertices);
@@ -78,5 +80,7 @@ namespace Graphics
 		DirectX::XMMATRIX world;
 		DirectX::XMMATRIX view;
 		DirectX::XMMATRIX projection;
+		float eye_y{ -10 };
+
 	};
 }

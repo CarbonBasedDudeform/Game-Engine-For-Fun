@@ -8,6 +8,7 @@
 #include <memory>
 #pragma warning(pop)
 
+
 #include "IRenderer.h"
 #include "Model.h"
 
@@ -33,5 +34,6 @@ namespace Graphics
 		 
 		std::unique_ptr<IRenderer> renderer_;
 		UpdateFunc update_func_{};
+		Graphics::IRenderer::EyePos eye_{0, 5.0f, -10.0f};
 	};
 }

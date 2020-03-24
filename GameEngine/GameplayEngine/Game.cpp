@@ -32,15 +32,15 @@ namespace Gameplay
 	{
 		_window->Update(_curScene->getModels(),
 			[=] {
-			auto currentTime = _clock.now();
-			auto deltaTime = static_cast<GameTimeDelta>(currentTime - _lastUpdateTime);
-			_curScene->Update(deltaTime);
-			_lastUpdateTime = currentTime;
-		});
-
-		std::thread renderThread(&Graphics::Window::Loop, _window.get());
-		renderThread.join();
+				auto currentTime = _clock.now();
+				auto deltaTime = static_cast<GameTimeDelta>(currentTime - _lastUpdateTime);
+				_curScene->Update(deltaTime);
+				_lastUpdateTime = currentTime;
+			});
+		
+		_window->Loop();
 	}
+
 	void Game::SetScene(std::unique_ptr<Gameplay::Scene> scene)
 	{
 		_curScene = std::move(scene);

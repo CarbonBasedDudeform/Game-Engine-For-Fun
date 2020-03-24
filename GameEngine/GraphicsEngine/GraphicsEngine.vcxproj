@@ -103,7 +103,7 @@
     </ClCompile>
     <Lib>
       <AdditionalLibraryDirectories>$(WindowsSDK_LibraryPath_x64);$(WindowsSDK_LibraryPath);$(SolutionDir)..\Externals;$(SolutionDir)..\Externals\gainput\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;gainputstatic.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;gainputstatic-d.lib;xinput.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

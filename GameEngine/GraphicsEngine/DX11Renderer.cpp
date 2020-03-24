@@ -4,8 +4,8 @@
 #include <filesystem>   
 #include <iostream> //todo: switch to some non-basic bitch logger
 #include <DirectXMath.h>
-#include <gainput\gainput.h>
 #pragma warning(pop) //enable warnings again
+
 
 namespace Graphics
 {
@@ -44,10 +44,13 @@ namespace Graphics
 		projection = DirectX::XMMatrixPerspectiveFovLH(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
 		//projection = DirectX::XMMatrixOrthographicLH(width, height, 0.1f, 1000.0f);
 
-		DirectX::XMVECTOR eye = DirectX::XMVectorSet(0.0f, 5.0f, -10.0f, 0.0f);
+		DirectX::XMVECTOR eye = DirectX::XMVectorSet(0.0f, 5.0f, eye_y, 0.0f);
 		DirectX::XMVECTOR lookAt = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 		DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 		view = DirectX::XMMatrixLookAtLH(eye, lookAt, up);
+
+		
+
 
 		D3D_FEATURE_LEVEL selectedFeatureLevel{};
 
@@ -209,6 +212,14 @@ namespace Graphics
 		IRenderer::SetModelsToRender(models);
 	}
 
+	void DX11Renderer::MoveEye(const EyePos& pos)
+	{
+		DirectX::XMVECTOR eye = DirectX::XMVectorSet(pos.x, pos.y, pos.z, 0.0f);
+		DirectX::XMVECTOR lookAt = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+		view = DirectX::XMMatrixLookAtLH(eye, lookAt, up);
+	}
+
 	void DX11Renderer::createVertexBuffer(ID3D11Buffer** buffer, const std::vector<Vertex>& vertices)
 	{
 		D3D11_SUBRESOURCE_DATA vertex_buffer_sub_resource;
@@ -301,8 +312,7 @@ namespace Graphics
 	void DX11Renderer::Render()
 	{
 		PreFrameRenderBehaviour();
-
-
+		
 		for (auto& cur_model : scene_models_) 
 		{
 			for (auto& mesh : cur_model.getMeshes())
