@@ -84,7 +84,7 @@ namespace Graphics
 		ZeroMemory(&fullScreenDesc, sizeof(fullScreenDesc));
 		fullScreenDesc.RefreshRate.Numerator = 60;
 		fullScreenDesc.RefreshRate.Denominator = 1;
-		fullScreenDesc.Windowed = true;
+		fullScreenDesc.Windowed = false;
 
 		D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, NULL, NULL, NULL, NULL, D3D11_SDK_VERSION, &swap_chain_desc, &swap_chain_, &device_, NULL, &context_);
 		
@@ -212,10 +212,10 @@ namespace Graphics
 		IRenderer::SetModelsToRender(models);
 	}
 
-	void DX11Renderer::MoveEye(const EyePos& pos)
+	void DX11Renderer::MoveEye(const Camera& pos)
 	{
-		DirectX::XMVECTOR eye = DirectX::XMVectorSet(pos.x, pos.y, pos.z, 0.0f);
-		DirectX::XMVECTOR lookAt = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		DirectX::XMVECTOR eye = DirectX::XMVectorSet(pos.eye_x, pos.eye_y, pos.eye_z, 0.0f);
+		DirectX::XMVECTOR lookAt = DirectX::XMVectorSet(pos.look_at_x, pos.look_at_y, pos.look_at_z, 0.0f);
 		DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 		view = DirectX::XMMatrixLookAtLH(eye, lookAt, up);
 	}

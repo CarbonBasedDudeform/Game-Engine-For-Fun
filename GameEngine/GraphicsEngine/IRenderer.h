@@ -19,9 +19,10 @@ namespace Graphics
 	class IRenderer
 	{
 	public:
-		struct EyePos
+		struct Camera
 		{
-			float x, y, z;
+			float eye_x, eye_y, eye_z;
+			float look_at_x, look_at_y, look_at_z;
 		};
 
 		IRenderer() = default;
@@ -33,7 +34,7 @@ namespace Graphics
 
 		virtual bool CreateContext(size_t height, size_t width, HWND windowHandle) = 0;
 		virtual void Render() = 0;
-		virtual void MoveEye(const EyePos& pos) = 0;
+		virtual void MoveEye(const Camera& pos) = 0;
 
 		virtual void SetModelsToRender(Models const& models) {
 			scene_models_ = models;

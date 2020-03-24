@@ -7,7 +7,9 @@ enum Button
 	Down,
 	Up,
 	Left,
-	Right
+	Right,
+	VerticalLook,
+	HorizontalLook
 };
 
 
@@ -74,10 +76,14 @@ namespace Graphics
 
 		//map.GetManager
 		auto map = gainput::InputMap(manager);
+
+		//keyboard
 		map.MapBool(Down, keyboardId, gainput::KeyS);
 		map.MapBool(Up, keyboardId, gainput::KeyW);
 		map.MapBool(Left, keyboardId, gainput::KeyA);
 		map.MapBool(Right, keyboardId, gainput::KeyD);
+		map.MapFloat(VerticalLook, mouseId, gainput::MouseAxisY);
+		map.MapFloat(HorizontalLook, mouseId, gainput::MouseAxisX);
 
 		while (msg.message != WM_QUIT)
 		{
@@ -95,26 +101,43 @@ namespace Graphics
 
 				if (map.GetBool(Down))
 				{
-					eye_.z -= 0.001f;
-					renderer_->MoveEye(eye_);
+					camera_.eye_z-= 0.01f;
+					camera_.look_at_z -= 0.01f;
+					renderer_->MoveEye(camera_);
 				}
 
 				if (map.GetBool(Up))
 				{
-					eye_.z += 0.001f;
-					renderer_->MoveEye(eye_);
+					camera_.eye_z += 0.01f;
+					camera_.look_at_z += 0.01f;
+					renderer_->MoveEye(camera_);
 				}
 
 				if (map.GetBool(Left))
 				{
-					eye_.x -= 0.001f;
-					renderer_->MoveEye(eye_);
+					camera_.look_at_x -= 0.01f;
+					camera_.eye_x -= 0.01f;
+					renderer_->MoveEye(camera_);
 				}
-
+				
 				if (map.GetBool(Right))
 				{
-					eye_.x += 0.001f;
-					renderer_->MoveEye(eye_);
+					camera_.look_at_x += 0.01f;
+					camera_.eye_x += 0.01f;
+					renderer_->MoveEye(camera_);
+				}
+
+
+				if (map.GetFloat(VerticalLook))
+				{
+					camera_.look_at_y += map.GetFloatDelta(VerticalLook) * 100;
+					renderer_->MoveEye(camera_);
+				}
+
+				if (map.GetFloat(HorizontalLook))
+				{
+					camera_.look_at_x += map.GetFloatDelta(HorizontalLook) * 100;
+					renderer_->MoveEye(camera_);
 				}
 
 				renderer_->Render();

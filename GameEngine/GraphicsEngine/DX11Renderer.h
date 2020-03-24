@@ -45,7 +45,7 @@ namespace Graphics
 		virtual void PreFrameRenderBehaviour() final;
 		virtual void PostFrameRenderBehaviour() final;
 		virtual void SetModelsToRender(Models const& models) final;
-		void MoveEye(const EyePos& pos) final;
+		void MoveEye(const Camera& pos) final;
 
 	private:
 		void createVertexBuffer(ID3D11Buffer** buffer, const std::vector<Vertex>& vertices);
