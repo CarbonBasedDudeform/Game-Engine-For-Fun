@@ -39,8 +39,16 @@ namespace Graphics
 			D3D_FEATURE_LEVEL_10_1,
 			D3D_FEATURE_LEVEL_10_0
 		};
-
 		
+		world = DirectX::XMMatrixIdentity();
+		projection = DirectX::XMMatrixPerspectiveFovLH(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
+		//projection = DirectX::XMMatrixOrthographicLH(width, height, 0.1f, 1000.0f);
+
+		DirectX::XMVECTOR eye = DirectX::XMVectorSet(0.0f, 5.0f, -10.0f, 0.0f);
+		DirectX::XMVECTOR lookAt = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+		view = DirectX::XMMatrixLookAtLH(eye, lookAt, up);
+
 		D3D_FEATURE_LEVEL selectedFeatureLevel{};
 
 		UINT const createDeviceFlags = 0;
@@ -265,7 +273,7 @@ namespace Graphics
 	void DX11Renderer::createConstantBuffer(ID3D11Buffer** constant_buffer)
 	{
 		D3D11_BUFFER_DESC cbd{ 0 };
-		cbd.ByteWidth = 16 + 64; //sizeof(constant buffer struct) ??
+		cbd.ByteWidth = sizeof(ConstantBuffer);//16 + 64; //sizeof(constant buffer struct) ??
 		cbd.Usage = D3D11_USAGE_DEFAULT;
 		cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 
@@ -294,6 +302,7 @@ namespace Graphics
 	{
 		PreFrameRenderBehaviour();
 
+
 		for (auto& cur_model : scene_models_) 
 		{
 			for (auto& mesh : cur_model.getMeshes())
@@ -309,9 +318,10 @@ namespace Graphics
 				auto const stride = UINT{ sizeof(Vertex) };
 				auto const offset = UINT{ 0 };
 
-				cur_model.constant_buffer.rotation = makeRotationMatrixUsingRadians(cur_model.rotation);
+				cur_model.constant_buffer.world = DirectX::XMMatrixTranspose(world);
+				cur_model.constant_buffer.view = DirectX::XMMatrixTranspose(view);
+				cur_model.constant_buffer.projection = DirectX::XMMatrixTranspose(projection);
 				context_->UpdateSubresource(to_render.constant_buffer, 0, 0, &cur_model.constant_buffer, 0, 0);
-				cur_model.rotation = cur_model.rotation + 0.0001f;
 
 				context_->VSSetConstantBuffers(0, 1, &to_render.constant_buffer);
 				context_->IASetVertexBuffers(0, 1, &to_render.vertices_buffer, &stride, &offset);

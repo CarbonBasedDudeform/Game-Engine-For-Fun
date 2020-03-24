@@ -73,7 +73,7 @@ namespace Graphics
 			std::cerr << err << std::endl;
 		}
 
-		constant_buffer.rotation = makeRotationMatrixUsingRadians(3.14/3.0 * 2);
+		//constant_buffer.rotation = makeRotationMatrixUsingRadians(3.14/3.0 * 2);
 	}
 
 	bool Model::isOk() const

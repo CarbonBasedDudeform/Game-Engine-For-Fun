@@ -5,6 +5,7 @@
 #include <string>
 #include <filesystem>
 #include <map>
+#include <DirectXMath.h>
 #pragma warning(pop)
 
 namespace Graphics
@@ -28,8 +29,9 @@ namespace Graphics
 	
 
 	struct ConstantBuffer {
-		Point position;
-		Rotation rotation;
+		DirectX::XMMATRIX world;
+		DirectX::XMMATRIX view;
+		DirectX::XMMATRIX projection;
 	};
 
 	struct Vertex
@@ -66,12 +68,7 @@ namespace Graphics
 
 		bool isOk() const;
 		const Meshes& getMeshes() const;
-		ConstantBuffer constant_buffer{
-			{ 0, -0.5f, 1.0f , 0},
-			{}
-		};
-
-		float rotation{};
+		ConstantBuffer constant_buffer{};
 
 	private:
 		bool loaded_okay_{};

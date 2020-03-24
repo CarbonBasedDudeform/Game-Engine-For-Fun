@@ -30,6 +30,7 @@ MAIN
 	//scene->AddModel(std::filesystem::current_path() / "Models" / "Dragon" / "dragon.obj");
 	//scene->AddModel(std::filesystem::current_path() / "Models" / "Sponza" / "sponza.obj");
 	//scene->AddModel(std::filesystem::current_path() / "Models" / "Sponza" / "mini_sponza.obj");
+	//scene->AddModel(std::filesystem::current_path() / "Models" / "MultiModelTest" / "multimodeltest.obj");
 
 	game->SetScene(std::move(scene));
 	game->Run();

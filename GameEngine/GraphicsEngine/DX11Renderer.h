@@ -5,6 +5,7 @@
 #include <dxgi1_2.h>
 #include <D3D11.h>
 #include <d3dcompiler.h>
+#include <DirectXMath.h>
 #include <memory>
 #include <wrl/client.h>
 #include <map>
@@ -74,5 +75,8 @@ namespace Graphics
 		ID3DBlob* pixel_shader_blob;
 
 		ID3D11DepthStencilState* depthStencilState_;
+		DirectX::XMMATRIX world;
+		DirectX::XMMATRIX view;
+		DirectX::XMMATRIX projection;
 	};
 }
