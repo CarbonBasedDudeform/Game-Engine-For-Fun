@@ -5,9 +5,9 @@
 
 #include <iostream> //TODO: replace with actual logging service...
 #define TINYOBJLOADER_IMPLEMENTATION
-#include "..\\..\\Externals\tinyobj_loader_opt.h"
+#include <tinyobj_loader_opt.h>
 #define STB_IMAGE_IMPLEMENTATION
-#include "..\\..\\Externals\stb_image.h"
+#include <stb_image.h>
 #pragma warning(pop)
 
 namespace Graphics

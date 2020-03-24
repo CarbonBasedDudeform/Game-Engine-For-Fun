@@ -4,7 +4,7 @@
 #include <filesystem>   
 #include <iostream> //todo: switch to some non-basic bitch logger
 #include <DirectXMath.h>
-
+#include <gainput\gainput.h>
 #pragma warning(pop) //enable warnings again
 
 namespace Graphics
