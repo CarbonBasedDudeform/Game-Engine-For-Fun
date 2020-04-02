@@ -59,8 +59,8 @@ namespace Graphics
 				{
 					auto idx = shape.mesh.indices[index_offset + v];
 					bool const texture_coords_exist = idx.texcoord_index != -1;
-					mesh.texture_idx_bucket[material_name].push_back(indices.size());
-					mesh.texture_verts_bucket[material_name].push_back(Vertex{ attribute.vertices[3*idx.vertex_index + 0], 
+					texture_idx_bucket[material_name].push_back(indices.size());
+					texture_verts_bucket[material_name].push_back(Vertex{ attribute.vertices[3*idx.vertex_index + 0], 
 													attribute.vertices[3*idx.vertex_index + 1], 
 													attribute.vertices[3*idx.vertex_index + 2],
 													texture_coords_exist ? attribute.texcoords[2 * idx.texcoord_index + 0] : 0,

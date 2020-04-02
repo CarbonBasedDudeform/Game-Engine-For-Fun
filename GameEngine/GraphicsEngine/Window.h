@@ -34,6 +34,6 @@ namespace Graphics
 		 
 		std::unique_ptr<IRenderer> renderer_;
 		UpdateFunc update_func_{};
-		Graphics::IRenderer::Camera camera_{0, 5.0f, -10.0f};
+		Graphics::IRenderer::Camera camera_{0, 2.5f, -10.0f};
 	};
 }

@@ -362,13 +362,12 @@ namespace Graphics
 
 				if (to_render.vertices.empty())
 				{
-					for (auto mesh : model.getMeshes()) //well this sure is nasty
+					//for (auto mesh : model.getMeshes()) //well this sure is nasty
 					{
-						auto verts = mesh.texture_verts_bucket[material_name];
-						auto idxs = mesh.texture_idx_bucket[material_name];
+						
 
-						to_render.vertices.insert(to_render.vertices.end(), verts.begin(), verts.end());
-						to_render.idxs.insert(to_render.idxs.end(), idxs.begin(), idxs.end());
+						to_render.vertices = model.texture_verts_bucket[material_name];
+						to_render.idxs = model.texture_idx_bucket[material_name];
 					}
 				}
 				if (!to_render.texture && texture  && texture->Data)

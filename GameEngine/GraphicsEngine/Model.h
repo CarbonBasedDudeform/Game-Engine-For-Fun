@@ -57,8 +57,7 @@ namespace Graphics
 		//std::vector<Vertex> vertices;
 		int start, size;
 		//std::vector<unsigned int> indices;
-		std::map<std::string, std::vector<Vertex>> texture_verts_bucket;
-		std::map<std::string, std::vector<unsigned int>> texture_idx_bucket;
+		
 		//std::shared_ptr<Material> texture;
 	};
 
@@ -76,7 +75,8 @@ namespace Graphics
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;
 		Materials getMaterials() const;
-
+		std::map<std::string, std::vector<Vertex>> texture_verts_bucket;
+		std::map<std::string, std::vector<unsigned int>> texture_idx_bucket;
 	private:
 		bool loaded_okay_{};
 		Meshes meshes_;
