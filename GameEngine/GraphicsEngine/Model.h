@@ -43,20 +43,23 @@ namespace Graphics
 
 	struct PNGTexture
 	{
-		int Width, Height, Comp;
+		int Id, Width, Height, Comp;
 		ImageData Data;
 	};
 
 	using Material = PNGTexture;
 
-	using Materials = std::vector<Material>;
+	using Materials = std::vector<std::string>;
 
 	struct Mesh
 	{
 		int id;
-		std::vector<Vertex> vertices;
-		std::vector<unsigned int> indices;
-		std::shared_ptr<Material> texture;
+		//std::vector<Vertex> vertices;
+		int start, size;
+		//std::vector<unsigned int> indices;
+		std::map<std::string, std::vector<Vertex>> texture_verts_bucket;
+		std::map<std::string, std::vector<unsigned int>> texture_idx_bucket;
+		//std::shared_ptr<Material> texture;
 	};
 
 	using Meshes = std::vector<Mesh>;
@@ -69,6 +72,10 @@ namespace Graphics
 		bool isOk() const;
 		const Meshes& getMeshes() const;
 		ConstantBuffer constant_buffer{};
+		std::shared_ptr<Material> getTexture(const std::string& name);
+		std::vector<Vertex> vertices;
+		std::vector<unsigned int> indices;
+		Materials getMaterials() const;
 
 	private:
 		bool loaded_okay_{};

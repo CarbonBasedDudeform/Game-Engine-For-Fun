@@ -192,6 +192,25 @@ namespace Graphics
 		//device_->CreateRasterizerState(&raster_desc, &raster_state);
 		//context_->RSSetState(raster_state);
 
+		D3D11_SAMPLER_DESC samplerDesc;
+		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.MipLODBias = 0.0f;
+		samplerDesc.MaxAnisotropy = 1;
+		samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+		samplerDesc.BorderColor[0] = 0;
+		samplerDesc.BorderColor[1] = 0;
+		samplerDesc.BorderColor[2] = 0;
+		samplerDesc.BorderColor[3] = 0;
+		samplerDesc.MinLOD = 0;
+		samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+		// Create the texture sampler state.
+		device_->CreateSamplerState(&samplerDesc, &m_sampleState);
+		context_->PSSetSamplers(0, 1, &m_sampleState);
+		
 		return true;
 	}
 
@@ -252,6 +271,13 @@ namespace Graphics
 
 	void DX11Renderer::createTexture(ID3D11Texture2D** texture, ID3D11ShaderResourceView** texture_view, const Material& const material)
 	{
+		if (texture_pool_.count(material.Id))
+		{
+			*texture = texture_pool_[material.Id].texture;
+			*texture_view = texture_pool_[material.Id].view;
+			return;
+		}
+
 		D3D11_TEXTURE2D_DESC texDesc;
 		//if i forget this i am a horrible, horrible little gremlin.
 		texDesc.Height = material.Height;
@@ -279,6 +305,8 @@ namespace Graphics
 
 		device_->CreateShaderResourceView(*texture, &srvDesc, texture_view);
 		context_->GenerateMips(*texture_view);
+
+		texture_pool_[material.Id] = { *texture, *texture_view };
 	}
 
 	void DX11Renderer::createConstantBuffer(ID3D11Buffer** constant_buffer)
@@ -294,17 +322,18 @@ namespace Graphics
 	void DX11Renderer::setupNewMesh(const Mesh& const mesh)
 	{
 		auto& new_renderable = renderables_[mesh.id];
-		new_renderable.index_count = mesh.indices.size();
+		new_renderable.index_count = mesh.size;
+		new_renderable.start = mesh.start;
 
-		createVertexBuffer(&new_renderable.vertices_buffer, mesh.vertices);
-		createIndicesBuffer(&new_renderable.index_buffer, mesh.indices);
+		//createVertexBuffer(&new_renderable.vertices_buffer, mesh.vertices);
+		//createIndicesBuffer(&new_renderable.index_buffer, mesh.indices);
 
-		auto& texture = mesh.texture;
-		bool const texture_exists = texture && texture->Data;
-		if (texture_exists)
-		{
-			createTexture(&new_renderable.texture, &new_renderable.texture_view, *mesh.texture);
-		}
+		//auto& texture = mesh.texture;
+		//bool const texture_exists = texture && texture->Data;
+		//if (texture_exists)
+		//{
+		//	createTexture(&new_renderable.texture, &new_renderable.texture_view, *mesh.texture);
+		//}
 
 		createConstantBuffer(&new_renderable.constant_buffer);
 	}
@@ -312,37 +341,130 @@ namespace Graphics
 	void DX11Renderer::Render()
 	{
 		PreFrameRenderBehaviour();
-		
-		for (auto& cur_model : scene_models_) 
+
+		//for each mode in scene
+			//grab materials
+			//for each material
+				//set up resource if need be
+				//grab verts for material from model
+				//set up verts and idx if needs be
+				//render verts with tex...simples right?
+
+		for(auto& model : scene_models_)
 		{
-			for (auto& mesh : cur_model.getMeshes())
+			auto const materials = model.getMaterials();
+
+			for (std::string material_name  : materials)
 			{
-				bool const mesh_is_fresh = renderables_.find(mesh.id) == renderables_.end();
-				if (mesh_is_fresh) 
+				const auto& texture = model.getTexture(material_name);
+				
+				auto& to_render = renderables_[texture->Id];
+
+				if (to_render.vertices.empty())
 				{
-					setupNewMesh(mesh);
+					for (auto mesh : model.getMeshes()) //well this sure is nasty
+					{
+						auto verts = mesh.texture_verts_bucket[material_name];
+						auto idxs = mesh.texture_idx_bucket[material_name];
+
+						to_render.vertices.insert(to_render.vertices.end(), verts.begin(), verts.end());
+						to_render.idxs.insert(to_render.idxs.end(), idxs.begin(), idxs.end());
+					}
+				}
+				if (!to_render.texture && texture  && texture->Data)
+				{
+					createTexture(&to_render.texture, &to_render.texture_view, *texture);
 				}
 
-				auto& to_render = renderables_[mesh.id];
+				if (!to_render.vertices_buffer)
+				{
+					createVertexBuffer(&to_render.vertices_buffer, to_render.vertices);
+					to_render.index_count = to_render.vertices.size();
+				}
 				
+				if (!to_render.index_buffer)
+				{
+					createIndicesBuffer(&to_render.index_buffer, to_render.idxs);
+					//to_render.index_count = texture_idxs.size();
+				}
+
+				if (!to_render.constant_buffer)
+				{
+					createConstantBuffer(&to_render.constant_buffer);
+				}
+
 				auto const stride = UINT{ sizeof(Vertex) };
 				auto const offset = UINT{ 0 };
-
-				cur_model.constant_buffer.world = DirectX::XMMatrixTranspose(world);
-				cur_model.constant_buffer.view = DirectX::XMMatrixTranspose(view);
-				cur_model.constant_buffer.projection = DirectX::XMMatrixTranspose(projection);
-				context_->UpdateSubresource(to_render.constant_buffer, 0, 0, &cur_model.constant_buffer, 0, 0);
-
-				context_->VSSetConstantBuffers(0, 1, &to_render.constant_buffer);
+				
 				context_->IASetVertexBuffers(0, 1, &to_render.vertices_buffer, &stride, &offset);
-				context_->IASetIndexBuffer(to_render.index_buffer, DXGI_FORMAT_R32_UINT, 0);
 				context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+				context_->IASetIndexBuffer(to_render.index_buffer, DXGI_FORMAT_R32_UINT, 0);
 
+				model.constant_buffer.world = DirectX::XMMatrixTranspose(world);
+				model.constant_buffer.view = DirectX::XMMatrixTranspose(view);
+				model.constant_buffer.projection = DirectX::XMMatrixTranspose(projection);
+				context_->UpdateSubresource(to_render.constant_buffer, 0, 0, &model.constant_buffer, 0, 0);
+				
+				context_->VSSetConstantBuffers(0, 1, &to_render.constant_buffer);
+				
 				if (to_render.texture_view) context_->PSSetShaderResources(0, 1, &to_render.texture_view);
-
-				context_->DrawIndexed(to_render.index_count, 0, 0);
+				
+				//context_->DrawIndexed(to_render.index_count, to_render.start, 0);
+				context_->Draw(to_render.index_count, 0);
 			}
 		}
+		
+		//for (auto& cur_model : scene_models_) 
+		//{
+		//	auto materials = cur_model.getMaterials();
+		//	for (auto mat : materials)
+		//	{
+		//		TextureStore temp;
+		//		auto tex = cur_model.getTexture(mat);
+		//		createTexture(&temp.texture, &temp.view, *tex);
+		//	}
+		//
+		//	
+		//
+		//	for (auto& mesh : cur_model.getMeshes())
+		//	{
+		//		if (!verts)
+		//		{
+		//			createVertexBuffer(&verts, cur_model.vertices);
+		//			auto const stride = UINT{ sizeof(Vertex) };
+		//			auto const offset = UINT{ 0 };
+		//
+		//			context_->IASetVertexBuffers(0, 1, &verts, &stride, &offset);
+		//			context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		//		}
+		//		if (!idxs)
+		//		{
+		//			createIndicesBuffer(&idxs, cur_model.indices);
+		//			context_->IASetIndexBuffer(idxs, DXGI_FORMAT_R32_UINT, 0);
+		//		}
+		//		
+		//		bool const mesh_is_fresh = renderables_.count(mesh.id) == 0;
+		//		if (mesh_is_fresh) 
+		//		{
+		//			setupNewMesh(mesh);
+		//		}
+		//
+		//		auto& to_render = renderables_[mesh.id];
+		//		
+		//		
+		//
+		//		cur_model.constant_buffer.world = DirectX::XMMatrixTranspose(world);
+		//		cur_model.constant_buffer.view = DirectX::XMMatrixTranspose(view);
+		//		cur_model.constant_buffer.projection = DirectX::XMMatrixTranspose(projection);
+		//		context_->UpdateSubresource(to_render.constant_buffer, 0, 0, &cur_model.constant_buffer, 0, 0);
+		//
+		//		context_->VSSetConstantBuffers(0, 1, &to_render.constant_buffer);
+		//
+		//		if (to_render.texture_view) context_->PSSetShaderResources(0, 1, &to_render.texture_view);
+		//
+		//		context_->DrawIndexed(to_render.index_count, to_render.start, 0);
+		//	}
+		//}
 		
 		
 		PostFrameRenderBehaviour();

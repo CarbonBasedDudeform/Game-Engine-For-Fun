@@ -27,6 +27,9 @@ struct Renderable {
 	ID3D11ShaderResourceView* texture_view;
 	ID3D11Texture2D* texture;
 	ID3D11Buffer* constant_buffer;
+	std::vector<Graphics::Vertex> vertices;
+	std::vector<unsigned int> idxs;
+	int start;
 };
 
 using Renderables = std::map<int, Renderable>; //<id, target>
@@ -55,7 +58,12 @@ namespace Graphics
 		void setupNewMesh(const Mesh& const mesh);
 
 	private:
-		
+		struct TextureStore
+		{
+			ID3D11Texture2D* texture;
+			ID3D11ShaderResourceView* view;
+		};
+
 		Renderables renderables_;
 		Microsoft::WRL::ComPtr<IDXGISwapChain> swap_chain_{};
 		ID3D11Device* device_{};
@@ -81,6 +89,11 @@ namespace Graphics
 		DirectX::XMMATRIX view;
 		DirectX::XMMATRIX projection;
 		float eye_y{ -10 };
+
+		std::map<int, TextureStore> texture_pool_{};
+		ID3D11Buffer* verts;
+		ID3D11Buffer* idxs;
+		ID3D11SamplerState* m_sampleState;
 
 	};
 }

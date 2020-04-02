@@ -24,44 +24,57 @@ namespace Graphics
 		
 		auto const parent = filename.parent_path();
 
-		for (auto& material : materials)
+		for (auto i = 0; i < materials.size(); i++)
 		{
+			auto& material = materials[i];
 			auto const texture_path = parent / std::filesystem::path{ material.diffuse_texname };
 			auto texture = std::make_shared<Material>();
 			texture->Data = stbi_load(texture_path.string().c_str(), &texture->Width, &texture->Height, &texture->Comp, STBI_rgb_alpha);
+			texture->Id = i;
 			materials_[material.name] = std::move(texture);
 		}
 
 		int count = 0;
 		for (auto& shape : shapes)
 		{
+			
+			auto index_offset = 0;
 			auto mesh = Mesh{};
 			mesh.id = count++;
+			mesh.start = indices.size();
 
-			for (auto& i : shape.mesh.indices) 
+			for (int f = 0; f < shape.mesh.num_face_vertices.size(); f++)
 			{
-				//attribute.vertices[3 * i.vertex_index + 2];
-				mesh.indices.push_back(mesh.indices.size());
-				bool const texture_coords_exist = i.texcoord_index != -1;
-				mesh.vertices.push_back(Vertex{ attribute.vertices[3*i.vertex_index + 0], 
-												attribute.vertices[3*i.vertex_index + 1], 
-												attribute.vertices[3*i.vertex_index + 2],
-												texture_coords_exist ? attribute.texcoords[2 * i.texcoord_index + 0] : 0,
-												texture_coords_exist ? attribute.texcoords[2 * i.texcoord_index + 1] : 0
-				});
-
-				int const texture_index = shape.mesh.material_ids[0]; //...not ideal
-				bool const textures_arent_used = texture_index < 0;
-				if (textures_arent_used) continue;
-
+				
+				int fv = shape.mesh.num_face_vertices[f]; 
+				
+				auto const texture_index = shape.mesh.material_ids[f];
 				auto const material_name = materials[texture_index].name;
 				bool const material_doesnt_exist = materials_.find(material_name) == materials_.end();
-				if (material_doesnt_exist) throw std::exception{"Trying to use non-existant material"};
+				if (material_doesnt_exist) throw std::exception{ "Trying to use non-existant material" };
+				//bool not_leaf = material_name != "leaf";
+				//mesh.texture = materials_[material_name];
 				
-				mesh.texture = materials_[material_name];
-			}
+				for (int v = 0; v < fv; v++)
+				{
+					auto idx = shape.mesh.indices[index_offset + v];
+					bool const texture_coords_exist = idx.texcoord_index != -1;
+					mesh.texture_idx_bucket[material_name].push_back(indices.size());
+					mesh.texture_verts_bucket[material_name].push_back(Vertex{ attribute.vertices[3*idx.vertex_index + 0], 
+													attribute.vertices[3*idx.vertex_index + 1], 
+													attribute.vertices[3*idx.vertex_index + 2],
+													texture_coords_exist ? attribute.texcoords[2 * idx.texcoord_index + 0] : 0,
+													texture_coords_exist ? attribute.texcoords[2 * idx.texcoord_index + 1] : 0
+					});
+				}
 
-			meshes_.push_back(mesh);
+				index_offset += fv;
+				
+				 
+				
+			}
+			mesh.size = indices.size() - mesh.start;
+			meshes_.emplace_back(mesh);
 		}
 
 		
@@ -84,6 +97,22 @@ namespace Graphics
 	const Meshes& Model::getMeshes() const
 	{
 		return meshes_;
+	}
+
+	Materials Model::getMaterials() const
+	{
+		auto result = Materials{};
+		for (auto& material : materials_)
+		{
+			result.push_back(material.first);
+		}
+
+		return result;
+	}
+
+	std::shared_ptr<Material> Model::getTexture(const std::string& name)
+	{
+		return materials_[name];
 	}
 
 	Rotation makeRotationMatrixUsingRadians(float amount) noexcept
