@@ -77,7 +77,7 @@ namespace Graphics
 		swap_chain_desc.BufferDesc.Width = width;
 		swap_chain_desc.BufferDesc.Height = height;
 		swap_chain_desc.OutputWindow = windowHandle;
-		swap_chain_desc.Windowed = true;
+		swap_chain_desc.Windowed = false;
 
 
 		DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullScreenDesc;

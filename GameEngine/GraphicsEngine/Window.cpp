@@ -36,7 +36,7 @@ namespace Graphics
 		UpdateWindow(window_handle_);
 		renderer_->CreateContext(height, width, window_handle_);
 
-
+		ShowCursor(false);
 		
 	}
 
@@ -93,6 +93,17 @@ namespace Graphics
 		normalize(forward);
 
 		return forward;
+	}
+
+	static int surpress_count = 0;
+	void Window::recenter_cursor()
+	{
+		POINT mouse_pos{};
+		GetCursorPos(&mouse_pos);
+		RECT window_rect;
+		GetWindowRect(window_handle_, &window_rect);
+		SetCursorPos((window_rect.left + window_rect.right)/2, (window_rect.bottom + window_rect.top)/2);
+		surpress_count = 0;
 	}
 
 	void Window::Loop() {
@@ -222,23 +233,43 @@ namespace Graphics
 				}
 
 
-				if (map.GetFloatDelta(VerticalLook) != 0.0)
+				if (surpress_count >= 50)
 				{
-					auto const delta = map.GetFloatDelta(VerticalLook);
-					camera_.look_at_y += delta * -50;
-					//camera_.look_at_y = std::clamp(camera_.look_at_y, -10.0f, 10.0f);
-					renderer_->MoveEye(camera_);
-					//SetCursorPos(1920 / 2, 1080 / 2);
-				}
+					if (map.GetFloatDelta(VerticalLook) != 0.0)
+					{
+						auto const delta = map.GetFloatDelta(VerticalLook);
+						camera_.look_at_y += delta * -500;
+						//camera_.look_at_y = std::clamp(camera_.look_at_y, -10.0f, 10.0f);
+						renderer_->MoveEye(camera_);
+						//SetCursorPos(1920 / 2, 1080 / 2);
+						recenter_cursor();
+					}
 
-				if (map.GetFloatDelta(HorizontalLook) != 0.0)
+					if (map.GetFloatDelta(HorizontalLook) != 0.0)
+					{
+						auto const delta = map.GetFloatDelta(HorizontalLook);
+						//camera_.look_at_x += delta * 500;
+						//
+						auto const forward = calcForward(camera_);
+						auto const up = Vector{ 0, 1, 0 };
+						auto left = cross(forward, up);
+
+						left.x *= -1 * (delta > 0 ? -1 : 1);
+						left.y *= -1 * (delta > 0 ? -1 : 1);
+						left.z *= -1 * (delta > 0 ? -1 : 1);
+
+						camera_.look_at_x += left.x;
+						camera_.look_at_y += left.y;
+						camera_.look_at_z += left.z;
+						//camera_.look_at_x = std::clamp(camera_.look_at_x, -10.0f, 10.0f);
+						renderer_->MoveEye(camera_);
+
+						//SetCursorPos(1920 / 2, 1080 / 2);
+						recenter_cursor();
+					}
+				}else
 				{
-					auto const delta = map.GetFloatDelta(HorizontalLook);
-					camera_.look_at_x += delta * 50;
-					//camera_.look_at_x = std::clamp(camera_.look_at_x, -10.0f, 10.0f);
-					renderer_->MoveEye(camera_);
-					
-					//SetCursorPos(1920 / 2, 1080 / 2);
+					surpress_count++;
 				}
 
 				renderer_->Render();

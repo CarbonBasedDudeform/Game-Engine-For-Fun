@@ -27,7 +27,8 @@ namespace Graphics
 	private:
 		void Create(std::string const& title, size_t height, size_t width);
 		static LRESULT WINAPI WndProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
-
+		void recenter_cursor();
+		
 	private:
 		HINSTANCE instance_{};
 		HWND window_handle_{};
