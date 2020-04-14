@@ -4,8 +4,8 @@
 #include <filesystem>   
 #include <iostream> //todo: switch to some non-basic bitch logger
 #include <DirectXMath.h>
-
 #pragma warning(pop) //enable warnings again
+
 
 namespace Graphics
 {
@@ -39,8 +39,19 @@ namespace Graphics
 			D3D_FEATURE_LEVEL_10_1,
 			D3D_FEATURE_LEVEL_10_0
 		};
+		
+		world = DirectX::XMMatrixIdentity();
+		projection = DirectX::XMMatrixPerspectiveFovLH(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
+		//projection = DirectX::XMMatrixOrthographicLH(width, height, 0.1f, 1000.0f);
+
+		DirectX::XMVECTOR eye = DirectX::XMVectorSet(0.0f, 5.0f, eye_y, 0.0f);
+		DirectX::XMVECTOR lookAt = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+		view = DirectX::XMMatrixLookAtLH(eye, lookAt, up);
 
 		
+
+
 		D3D_FEATURE_LEVEL selectedFeatureLevel{};
 
 		UINT const createDeviceFlags = 0;
@@ -56,7 +67,7 @@ namespace Graphics
 
 		DXGI_SWAP_CHAIN_DESC swap_chain_desc;
 		ZeroMemory(&swap_chain_desc, sizeof(swap_chain_desc));
-		swap_chain_desc.SampleDesc.Count = 4;
+		swap_chain_desc.SampleDesc.Count = 1;
 		//swapChainDesc.SampleDesc.Quality = 0;// qualityLevels[0];
 		swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
@@ -66,14 +77,14 @@ namespace Graphics
 		swap_chain_desc.BufferDesc.Width = width;
 		swap_chain_desc.BufferDesc.Height = height;
 		swap_chain_desc.OutputWindow = windowHandle;
-		swap_chain_desc.Windowed = true;
+		swap_chain_desc.Windowed = false;
 
 
 		DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullScreenDesc;
 		ZeroMemory(&fullScreenDesc, sizeof(fullScreenDesc));
 		fullScreenDesc.RefreshRate.Numerator = 60;
 		fullScreenDesc.RefreshRate.Denominator = 1;
-		fullScreenDesc.Windowed = true;
+		fullScreenDesc.Windowed = false;
 
 		D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, NULL, NULL, NULL, NULL, D3D11_SDK_VERSION, &swap_chain_desc, &swap_chain_, &device_, NULL, &context_);
 		
@@ -82,24 +93,59 @@ namespace Graphics
 		device_->CreateRenderTargetView(back_buffer_, nullptr, &render_target_);
 		back_buffer_->Release();
 		
-		//D3D11_TEXTURE2D_DESC depthStencilDesc;
-		//ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
-		//depthStencilDesc.Width = width;
-		//depthStencilDesc.Height = height;
-		//depthStencilDesc.MipLevels = 1;
-		//depthStencilDesc.ArraySize = 1;
-		//depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-		//depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-		//depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
-		//depthStencilDesc.SampleDesc.Count = 1;
-		//depthStencilDesc.SampleDesc.Quality = 0;
-		//
-		//device_->CreateTexture2D(&depthStencilDesc, nullptr,&depth_stencil_buffer_);
-		//device_->CreateDepthStencilView(depth_stencil_buffer_, nullptr, &depth_stencil_view_);
-		//
-		//
-		//context_->OMSetRenderTargets(1, &render_target_, depth_stencil_view_);
-		context_->OMSetRenderTargets(1, &render_target_, nullptr);
+		D3D11_TEXTURE2D_DESC depthStencilTextureDesc;
+		ZeroMemory(&depthStencilTextureDesc, sizeof(depthStencilTextureDesc));
+		depthStencilTextureDesc.Width = width;
+		depthStencilTextureDesc.Height = height;
+		depthStencilTextureDesc.MipLevels = 1;
+		depthStencilTextureDesc.ArraySize = 1;
+		depthStencilTextureDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		depthStencilTextureDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+		depthStencilTextureDesc.Usage = D3D11_USAGE_DEFAULT;
+		depthStencilTextureDesc.SampleDesc.Count = 1;
+		depthStencilTextureDesc.SampleDesc.Quality = 0;
+		depthStencilTextureDesc.CPUAccessFlags = 0;
+		depthStencilTextureDesc.MiscFlags = 0;
+		
+		device_->CreateTexture2D(&depthStencilTextureDesc, nullptr,&depth_stencil_buffer_);
+
+		
+		D3D11_DEPTH_STENCIL_DESC depthStencilDesc;
+		ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
+
+		depthStencilDesc.DepthEnable = true;
+		depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+		depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
+		
+		depthStencilDesc.StencilEnable = true;
+		depthStencilDesc.StencilReadMask = 0xFF;
+		depthStencilDesc.StencilWriteMask = 0xFF;
+		
+		depthStencilDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+		depthStencilDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
+		depthStencilDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+		depthStencilDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+		
+		depthStencilDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+		depthStencilDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
+		depthStencilDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+
+		device_->CreateDepthStencilState(&depthStencilDesc, &depthStencilState_);
+		context_->OMSetDepthStencilState(depthStencilState_, 1);
+
+		D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
+		ZeroMemory(&depthStencilViewDesc, sizeof(depthStencilViewDesc));
+
+		// Set up the depth stencil view description.
+		depthStencilViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		
+		depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+		depthStencilViewDesc.Texture2D.MipSlice = 0;
+
+		device_->CreateDepthStencilView(depth_stencil_buffer_, &depthStencilViewDesc, &depth_stencil_view_);
+		
+		
+		context_->OMSetRenderTargets(1, &render_target_, depth_stencil_view_);
 
 		D3D11_VIEWPORT viewport;
 		ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));
@@ -135,17 +181,36 @@ namespace Graphics
 		context_->IASetInputLayout(input_layout);
 
 		//set raster state
-		D3D11_RASTERIZER_DESC raster_desc;
-		ZeroMemory(&raster_desc, sizeof(raster_desc));
-		raster_desc.CullMode = D3D11_CULL_BACK;
-		//raster_desc.DepthClipEnable = true;
-		raster_desc.FrontCounterClockwise = false;
-		raster_desc.FillMode = D3D11_FILL_SOLID;
-		
-		ID3D11RasterizerState* raster_state;
-		device_->CreateRasterizerState(&raster_desc, &raster_state);
-		context_->RSSetState(raster_state);
+		//D3D11_RASTERIZER_DESC raster_desc;
+		//ZeroMemory(&raster_desc, sizeof(raster_desc));
+		//raster_desc.CullMode = D3D11_CULL_BACK;
+		////raster_desc.DepthClipEnable = true;
+		//raster_desc.FrontCounterClockwise = false;
+		//raster_desc.FillMode = D3D11_FILL_SOLID;
+		//
+		//ID3D11RasterizerState* raster_state;
+		//device_->CreateRasterizerState(&raster_desc, &raster_state);
+		//context_->RSSetState(raster_state);
 
+		D3D11_SAMPLER_DESC samplerDesc;
+		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.MipLODBias = 0.0f;
+		samplerDesc.MaxAnisotropy = 1;
+		samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+		samplerDesc.BorderColor[0] = 0;
+		samplerDesc.BorderColor[1] = 0;
+		samplerDesc.BorderColor[2] = 0;
+		samplerDesc.BorderColor[3] = 0;
+		samplerDesc.MinLOD = 0;
+		samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+		// Create the texture sampler state.
+		device_->CreateSamplerState(&samplerDesc, &m_sampleState);
+		context_->PSSetSamplers(0, 1, &m_sampleState);
+		
 		return true;
 	}
 
@@ -153,6 +218,7 @@ namespace Graphics
 	{
 		static float const color[]{ 0.0f, 0.2f, 0.4f, 1.0f };
 		context_->ClearRenderTargetView(render_target_, color);
+		context_->ClearDepthStencilView(depth_stencil_view_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	}
 
 	void DX11Renderer::PostFrameRenderBehaviour()
@@ -163,104 +229,241 @@ namespace Graphics
 	void DX11Renderer::SetModelsToRender(Models const& models)
 	{
 		IRenderer::SetModelsToRender(models);
+	}
 
-		//if there is nothing, then bye bye
-		if (models.empty()) return;
+	void DX11Renderer::MoveEye(const Camera& pos)
+	{
+		DirectX::XMVECTOR eye = DirectX::XMVectorSet(pos.eye_x, pos.eye_y, pos.eye_z, 0.0f);
+		DirectX::XMVECTOR lookAt = DirectX::XMVectorSet(pos.look_at_x, pos.look_at_y, pos.look_at_z, 0.0f);
+		DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+		view = DirectX::XMMatrixLookAtLH(eye, lookAt, up);
+	}
 
+	void DX11Renderer::createVertexBuffer(ID3D11Buffer** buffer, const std::vector<Vertex>& vertices)
+	{
+		D3D11_SUBRESOURCE_DATA vertex_buffer_sub_resource;
+		vertex_buffer_sub_resource.pSysMem = vertices.data();
 
+		D3D11_BUFFER_DESC buffer_desc;
+		ZeroMemory(&buffer_desc, sizeof(buffer_desc));
+		buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+		buffer_desc.ByteWidth = sizeof(Vertex) * vertices.size();
+		buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+		device_->CreateBuffer(&buffer_desc, &vertex_buffer_sub_resource, buffer);
+	}
+
+	void DX11Renderer::createIndicesBuffer(ID3D11Buffer** buffer, const std::vector<unsigned int>& indices)
+	{
+		D3D11_SUBRESOURCE_DATA index_buffer_sub_resource;
+		index_buffer_sub_resource.pSysMem = indices.data();
+
+		D3D11_BUFFER_DESC index_buffer_desc;
+		ZeroMemory(&index_buffer_desc, sizeof(index_buffer_desc));
+		index_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+		index_buffer_desc.ByteWidth = sizeof(indices[0]) * indices.size();
+		index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+		index_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+		device_->CreateBuffer(&index_buffer_desc, &index_buffer_sub_resource, buffer);
+	}
+
+	void DX11Renderer::createTexture(ID3D11Texture2D** texture, ID3D11ShaderResourceView** texture_view, const Material& const material)
+	{
+		if (texture_pool_.count(material.Id))
+		{
+			*texture = texture_pool_[material.Id].texture;
+			*texture_view = texture_pool_[material.Id].view;
+			return;
+		}
+
+		D3D11_TEXTURE2D_DESC texDesc;
+		//if i forget this i am a horrible, horrible little gremlin.
+		texDesc.Height = material.Height;
+		texDesc.Width = material.Width;
+		texDesc.MipLevels = 0;
+		texDesc.ArraySize = 1;
+		texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		texDesc.SampleDesc.Count = 1;
+		texDesc.SampleDesc.Quality = 0;
+		texDesc.Usage = D3D11_USAGE_DEFAULT;
+		texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+		texDesc.CPUAccessFlags = 0;
+		texDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+		auto hr = device_->CreateTexture2D(&texDesc, NULL, texture);
+		if (hr != S_OK) throw std::exception{};
+
+		auto rowPitch = (material.Width * 4) * sizeof(unsigned char);
+		context_->UpdateSubresource(*texture, 0, NULL, material.Data, rowPitch, 0);
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+		srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MostDetailedMip = 0;
+		srvDesc.Texture2D.MipLevels = 1;
+
+		device_->CreateShaderResourceView(*texture, &srvDesc, texture_view);
+		context_->GenerateMips(*texture_view);
+
+		texture_pool_[material.Id] = { *texture, *texture_view };
+	}
+
+	void DX11Renderer::createConstantBuffer(ID3D11Buffer** constant_buffer)
+	{
+		D3D11_BUFFER_DESC cbd{ 0 };
+		cbd.ByteWidth = sizeof(ConstantBuffer);//16 + 64; //sizeof(constant buffer struct) ??
+		cbd.Usage = D3D11_USAGE_DEFAULT;
+		cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+		device_->CreateBuffer(&cbd, 0, constant_buffer);
+	}
+
+	void DX11Renderer::setupNewMesh(const Mesh& const mesh)
+	{
+		auto& new_renderable = renderables_[mesh.id];
+		new_renderable.index_count = mesh.size;
+		new_renderable.start = mesh.start;
+
+		//createVertexBuffer(&new_renderable.vertices_buffer, mesh.vertices);
+		//createIndicesBuffer(&new_renderable.index_buffer, mesh.indices);
+
+		//auto& texture = mesh.texture;
+		//bool const texture_exists = texture && texture->Data;
+		//if (texture_exists)
+		//{
+		//	createTexture(&new_renderable.texture, &new_renderable.texture_view, *mesh.texture);
+		//}
+
+		createConstantBuffer(&new_renderable.constant_buffer);
 	}
 
 	void DX11Renderer::Render()
 	{
 		PreFrameRenderBehaviour();
 
-		for (auto& scene : scene_models_) 
+		//for each mode in scene
+			//grab materials
+			//for each material
+				//set up resource if need be
+				//grab verts for material from model
+				//set up verts and idx if needs be
+				//render verts with tex...simples right?
+
+		for(auto& model : scene_models_)
 		{
-			for (auto& mesh : scene.getMeshes())
+			auto const materials = model.getMaterials();
+
+			for (std::string material_name  : materials)
 			{
-				if (renderables_.find(mesh.id) == renderables_.end()) 
+				const auto& texture = model.getTexture(material_name);
+				
+				auto& to_render = renderables_[texture->Id];
+
+				if (to_render.vertices.empty())
 				{
-					auto& new_renderable = renderables_[mesh.id];
-					new_renderable.index_count = mesh.indices.size();
+					//for (auto mesh : model.getMeshes()) //well this sure is nasty
+					{
+						
 
-					//create vertex buffer
-
-					D3D11_SUBRESOURCE_DATA vertex_buffer_sub_resource;
-					vertex_buffer_sub_resource.pSysMem = mesh.vertices.data();
-
-					D3D11_BUFFER_DESC buffer_desc;
-					ZeroMemory(&buffer_desc, sizeof(buffer_desc));
-					buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-					buffer_desc.ByteWidth = sizeof(Vertex) * mesh.vertices.size();
-					buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-					buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-					device_->CreateBuffer(&buffer_desc, &vertex_buffer_sub_resource, &new_renderable.vertices_buffer);
-
-					//create index buffer
-
-					D3D11_SUBRESOURCE_DATA index_buffer_sub_resource;
-					index_buffer_sub_resource.pSysMem = mesh.indices.data();
-
-					D3D11_BUFFER_DESC index_buffer_desc;
-					ZeroMemory(&index_buffer_desc, sizeof(index_buffer_desc));
-					index_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-					index_buffer_desc.ByteWidth = sizeof(mesh.indices[0]) * new_renderable.index_count;
-					index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-					index_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-					device_->CreateBuffer(&index_buffer_desc, &index_buffer_sub_resource, &new_renderable.index_buffer);
-
-					
-
-					auto& texture = mesh.texture;
-
-					if (texture->Data) {
-
-
-						D3D11_TEXTURE2D_DESC texDesc;
-						//if i forget this i am a horrible, horrible little gremlin.
-						texDesc.Height = texture->Height;
-						texDesc.Width = texture->Width;
-						texDesc.MipLevels = 0;
-						texDesc.ArraySize = 1;
-						texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-						texDesc.SampleDesc.Count = 1;
-						texDesc.SampleDesc.Quality = 0;
-						texDesc.Usage = D3D11_USAGE_DEFAULT;
-						texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-						texDesc.CPUAccessFlags = 0;
-						texDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
-
-						auto hr = device_->CreateTexture2D(&texDesc, NULL, &new_renderable.texture);
-						if (hr != S_OK) throw std::exception{};
-
-						auto rowPitch = (texture->Width * 4) * sizeof(unsigned char);
-						context_->UpdateSubresource(new_renderable.texture, 0, NULL, texture->Data, rowPitch, 0);
-						D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-						srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-						srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-						srvDesc.Texture2D.MostDetailedMip = 0;
-						srvDesc.Texture2D.MipLevels = 1;
-
-						device_->CreateShaderResourceView(new_renderable.texture, &srvDesc, &new_renderable.texture_view);
-						context_->GenerateMips(new_renderable.texture_view);
+						to_render.vertices = model.texture_verts_bucket[material_name];
+						to_render.idxs = model.texture_idx_bucket[material_name];
 					}
 				}
+				if (!to_render.texture && texture  && texture->Data)
+				{
+					createTexture(&to_render.texture, &to_render.texture_view, *texture);
+				}
 
-				auto& to_render = renderables_[mesh.id];
+				if (!to_render.vertices_buffer)
+				{
+					createVertexBuffer(&to_render.vertices_buffer, to_render.vertices);
+					to_render.index_count = to_render.vertices.size();
+				}
 				
+				if (!to_render.index_buffer)
+				{
+					createIndicesBuffer(&to_render.index_buffer, to_render.idxs);
+					//to_render.index_count = texture_idxs.size();
+				}
+
+				if (!to_render.constant_buffer)
+				{
+					createConstantBuffer(&to_render.constant_buffer);
+				}
+
 				auto const stride = UINT{ sizeof(Vertex) };
 				auto const offset = UINT{ 0 };
+				
 				context_->IASetVertexBuffers(0, 1, &to_render.vertices_buffer, &stride, &offset);
-				context_->IASetIndexBuffer(to_render.index_buffer, DXGI_FORMAT_R32_UINT, 0);
 				context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+				context_->IASetIndexBuffer(to_render.index_buffer, DXGI_FORMAT_R32_UINT, 0);
 
-				context_->PSSetShaderResources(0, 1, &to_render.texture_view);
-
-				context_->DrawIndexed(to_render.index_count, 0, 0);
+				model.constant_buffer.world = DirectX::XMMatrixTranspose(world);
+				model.constant_buffer.view = DirectX::XMMatrixTranspose(view);
+				model.constant_buffer.projection = DirectX::XMMatrixTranspose(projection);
+				context_->UpdateSubresource(to_render.constant_buffer, 0, 0, &model.constant_buffer, 0, 0);
+				
+				context_->VSSetConstantBuffers(0, 1, &to_render.constant_buffer);
+				
+				if (to_render.texture_view) context_->PSSetShaderResources(0, 1, &to_render.texture_view);
+				
+				//context_->DrawIndexed(to_render.index_count, to_render.start, 0);
+				context_->Draw(to_render.index_count, 0);
 			}
 		}
+		
+		//for (auto& cur_model : scene_models_) 
+		//{
+		//	auto materials = cur_model.getMaterials();
+		//	for (auto mat : materials)
+		//	{
+		//		TextureStore temp;
+		//		auto tex = cur_model.getTexture(mat);
+		//		createTexture(&temp.texture, &temp.view, *tex);
+		//	}
+		//
+		//	
+		//
+		//	for (auto& mesh : cur_model.getMeshes())
+		//	{
+		//		if (!verts)
+		//		{
+		//			createVertexBuffer(&verts, cur_model.vertices);
+		//			auto const stride = UINT{ sizeof(Vertex) };
+		//			auto const offset = UINT{ 0 };
+		//
+		//			context_->IASetVertexBuffers(0, 1, &verts, &stride, &offset);
+		//			context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		//		}
+		//		if (!idxs)
+		//		{
+		//			createIndicesBuffer(&idxs, cur_model.indices);
+		//			context_->IASetIndexBuffer(idxs, DXGI_FORMAT_R32_UINT, 0);
+		//		}
+		//		
+		//		bool const mesh_is_fresh = renderables_.count(mesh.id) == 0;
+		//		if (mesh_is_fresh) 
+		//		{
+		//			setupNewMesh(mesh);
+		//		}
+		//
+		//		auto& to_render = renderables_[mesh.id];
+		//		
+		//		
+		//
+		//		cur_model.constant_buffer.world = DirectX::XMMatrixTranspose(world);
+		//		cur_model.constant_buffer.view = DirectX::XMMatrixTranspose(view);
+		//		cur_model.constant_buffer.projection = DirectX::XMMatrixTranspose(projection);
+		//		context_->UpdateSubresource(to_render.constant_buffer, 0, 0, &cur_model.constant_buffer, 0, 0);
+		//
+		//		context_->VSSetConstantBuffers(0, 1, &to_render.constant_buffer);
+		//
+		//		if (to_render.texture_view) context_->PSSetShaderResources(0, 1, &to_render.texture_view);
+		//
+		//		context_->DrawIndexed(to_render.index_count, to_render.start, 0);
+		//	}
+		//}
 		
 		
 		PostFrameRenderBehaviour();

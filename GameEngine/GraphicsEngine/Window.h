@@ -8,6 +8,7 @@
 #include <memory>
 #pragma warning(pop)
 
+
 #include "IRenderer.h"
 #include "Model.h"
 
@@ -26,12 +27,14 @@ namespace Graphics
 	private:
 		void Create(std::string const& title, size_t height, size_t width);
 		static LRESULT WINAPI WndProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
-
+		void recenter_cursor();
+		
 	private:
 		HINSTANCE instance_{};
 		HWND window_handle_{};
 		 
 		std::unique_ptr<IRenderer> renderer_;
 		UpdateFunc update_func_{};
+		Graphics::IRenderer::Camera camera_{0, 2.5f, -10.0f};
 	};
 }

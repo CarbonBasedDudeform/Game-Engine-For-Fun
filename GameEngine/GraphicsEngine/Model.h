@@ -5,34 +5,60 @@
 #include <string>
 #include <filesystem>
 #include <map>
+#include <DirectXMath.h>
 #pragma warning(pop)
 
 namespace Graphics
 {
+	struct Vector {
+		float x, y, z;
+	};
+	
+	struct Point {
+		float x, y, z, w;
+	};
+
+	struct Rotation {
+		Point x,y,z,w;
+	};
+
+	//using Rotation = std::array<std::array<float, 4>, 4>;
+
+	Rotation makeRotationMatrixUsingRadians(float angle) noexcept;
+
+	
+
+	struct ConstantBuffer {
+		DirectX::XMMATRIX world;
+		DirectX::XMMATRIX view;
+		DirectX::XMMATRIX projection;
+	};
+
 	struct Vertex
 	{
 		float x, y, z, u, v;
-		int texutre_index;
 	};
 	
 	using ImageData = unsigned char*;
 
 	struct PNGTexture
 	{
-		int Width, Height, Comp;
+		int Id, Width, Height, Comp;
 		ImageData Data;
 	};
 
 	using Material = PNGTexture;
 
-	using Materials = std::vector<Material>;
+	using Materials = std::vector<std::string>;
 
 	struct Mesh
 	{
 		int id;
-		std::vector<Vertex> vertices;
-		std::vector<unsigned int> indices;
-		std::shared_ptr<Material> texture;
+		//std::vector<Vertex> vertices;
+		int start, size;
+		//std::vector<unsigned int> indices;
+		
+		//std::shared_ptr<Material> texture;
 	};
 
 	using Meshes = std::vector<Mesh>;
@@ -44,7 +70,13 @@ namespace Graphics
 
 		bool isOk() const;
 		const Meshes& getMeshes() const;
-
+		ConstantBuffer constant_buffer{};
+		std::shared_ptr<Material> getTexture(const std::string& name);
+		std::vector<Vertex> vertices;
+		std::vector<unsigned int> indices;
+		Materials getMaterials() const;
+		std::map<std::string, std::vector<Vertex>> texture_verts_bucket;
+		std::map<std::string, std::vector<unsigned int>> texture_idx_bucket;
 	private:
 		bool loaded_okay_{};
 		Meshes meshes_;

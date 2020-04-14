@@ -1,3 +1,9 @@
+cbuffer WorldViewProjection {
+	matrix world;
+	matrix view;
+	matrix projection;
+};
+
 struct VertexInput
 {
 	float4 position : POSITION;
@@ -14,7 +20,9 @@ PixelInput main(VertexInput input)
 {
 	PixelInput output;
 
-	output.position = input.position;
+	output.position = mul(input.position, world);
+	output.position = mul(output.position, view);
+	output.position = mul(output.position, projection);
 	output.tex = input.tex;
 	return output;
 }
