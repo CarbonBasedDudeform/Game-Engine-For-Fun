@@ -23,6 +23,6 @@ PixelInput main(VertexInput input)
 	output.position = mul(input.position, world);
 	output.position = mul(output.position, view);
 	output.position = mul(output.position, projection);
-	output.tex = input.tex;
+	output.tex = float2(input.tex.x, 1. - input.tex.y);
 	return output;
 }
