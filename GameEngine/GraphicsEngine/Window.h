@@ -9,6 +9,7 @@
 
 
 #include "IRenderer.h"
+#include "FreeRoamProjectionCamera.h"
 #include "Model.h"
 
 #define MAIN int CALLBACK WinMain(__in  HINSTANCE hInstance,__in  HINSTANCE hPrevInstance,__in  LPSTR lpCmdLine,__in  int nCmdShow)
@@ -41,6 +42,6 @@ namespace Graphics
 		UpdateFunc update_func_{};
 
 		std::shared_ptr<PAL::InputManager> input_manager_{};
-		Graphics::IRenderer::Camera camera_{0, 2.5f, -10.0f};
+		Graphics::FreeRoamProjectionCamera camera_{0, 2.5f, -10.0f};
 	};
 }

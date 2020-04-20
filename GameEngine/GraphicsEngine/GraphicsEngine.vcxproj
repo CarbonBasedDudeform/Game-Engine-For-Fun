@@ -140,12 +140,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="DX11Renderer.h" />
+    <ClInclude Include="FreeRoamProjectionCamera.h" />
+    <ClInclude Include="ICamera.h" />
+    <ClInclude Include="IMoveableCamera.h" />
     <ClInclude Include="IRenderer.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DX11Renderer.cpp" />
+    <ClCompile Include="FreeRoamProjectionCamera.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>

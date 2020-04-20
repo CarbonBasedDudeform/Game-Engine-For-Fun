@@ -176,16 +176,7 @@ namespace Graphics
 		};
 	}
 
-	Vector calcForward(const Graphics::IRenderer::Camera& camera)
-	{
-		auto forward = Vector{ camera.eye_x - camera.look_at_x
-							 , camera.eye_y - camera.look_at_y
-							 , camera.eye_z - camera.look_at_z };
-
-		normalize(forward);
-
-		return forward;
-	}
+	
 
 	void Window::recenter_cursor()
 	{
@@ -204,118 +195,53 @@ namespace Graphics
 
 		input_manager_->registerAction(PAL::InputManager::Down, [&]()
 			{
-				//calc forward vector
-				//flip it
-				//move that way
-
-				auto forward = calcForward(camera_);
-
-				forward.x *= 0.01;
-				forward.y *= 0.01;
-				forward.z *= 0.01;
-
-				camera_.eye_x += forward.x;
-				camera_.eye_y += forward.y;
-				camera_.eye_z += forward.z;
-
-				camera_.look_at_x += forward.x;
-				camera_.look_at_y += forward.y;
-				camera_.look_at_z += forward.z;
-				renderer_->MoveEye(camera_);
+				camera_.moveBack();
+				renderer_->MoveCamera(camera_);
 			});
 
 		input_manager_->registerAction(PAL::InputManager::Up, [&]()
 			{
-				//calc forward vector
-				//move that way
-				auto forward = calcForward(camera_);
-
-				forward.x *= -1;
-				forward.y *= -1;
-				forward.z *= -1;
-
-				forward.x *= 0.01;
-				forward.y *= 0.01;
-				forward.z *= 0.01;
-
-				camera_.eye_x += forward.x;
-				camera_.eye_y += forward.y;
-				camera_.eye_z += forward.z;
-
-				camera_.look_at_x += forward.x;
-				camera_.look_at_y += forward.y;
-				camera_.look_at_z += forward.z;
-				renderer_->MoveEye(camera_);
+				camera_.moveForward();
+				renderer_->MoveCamera(camera_);
 			});
 
 		input_manager_->registerAction(PAL::InputManager::Left, [&]()
 			{
-				//calc forward vector
-						//rotate it 90 around up vector.
-						//move that way
-				auto const forward = calcForward(camera_);
-				auto const up = Vector{ 0, 1, 0 };
-				auto left = cross(forward, up);
-
-				left.x *= -0.01;
-				left.y *= -0.01;
-				left.z *= -0.01;
-
-				camera_.eye_x += left.x;
-				camera_.eye_y += left.y;
-				camera_.eye_z += left.z;
-
-				camera_.look_at_x += left.x;
-				camera_.look_at_y += left.y;
-				camera_.look_at_z += left.z;
-				renderer_->MoveEye(camera_);
+				camera_.moveLeft();
+				renderer_->MoveCamera(camera_);
 			});
 
 		input_manager_->registerAction(PAL::InputManager::Right, [&]()
 			{
-				auto const forward = calcForward(camera_);
-				auto const up = Vector{ 0, 1, 0 };
-				auto right = cross(forward, up);
-
-				right.x *= 0.01;
-				right.y *= 0.01;
-				right.z *= 0.01;
-
-				camera_.eye_x += right.x;
-				camera_.eye_y += right.y;
-				camera_.eye_z += right.z;
-
-				camera_.look_at_x += right.x;
-				camera_.look_at_y += right.y;
-				camera_.look_at_z += right.z;
-				renderer_->MoveEye(camera_);
+				camera_.moveRight();
+				renderer_->MoveCamera(camera_);
 			});
 
-		input_manager_->registerAxis(PAL::InputManager::VerticalLook, [&](float delta)
-			{
-				camera_.look_at_y += delta * -500;
-				renderer_->MoveEye(camera_);
-				recenter_cursor();
-			});
-
-		input_manager_->registerAxis(PAL::InputManager::HorizontalLook, [&](float delta)
-			{
-				auto const forward = calcForward(camera_);
-				auto const up = Vector{ 0, 1, 0 };
-				auto left = cross(forward, up);
-
-				left.x *= -1 * (delta > 0 ? -1 : 1);
-				left.y *= -1 * (delta > 0 ? -1 : 1);
-				left.z *= -1 * (delta > 0 ? -1 : 1);
-
-				camera_.look_at_x += left.x;
-				camera_.look_at_y += left.y;
-				camera_.look_at_z += left.z;
-
-				renderer_->MoveEye(camera_);
-
-				recenter_cursor();
-			});
+		//input_manager_->registerAxis(PAL::InputManager::VerticalLook, [&](float delta)
+		//	{
+		//		camera_.look_at_y += delta * -500;
+		//		renderer_->MoveEye(camera_);
+		//		recenter_cursor();
+		//	});
+		//
+		//input_manager_->registerAxis(PAL::InputManager::HorizontalLook, [&](float delta)
+		//	{
+		//		auto const forward = calcForward(camera_);
+		//		auto const up = Vector{ 0, 1, 0 };
+		//		auto left = cross(forward, up);
+		//
+		//		left.x *= -1 * (delta > 0 ? -1 : 1);
+		//		left.y *= -1 * (delta > 0 ? -1 : 1);
+		//		left.z *= -1 * (delta > 0 ? -1 : 1);
+		//
+		//		camera_.look_at_x += left.x;
+		//		camera_.look_at_y += left.y;
+		//		camera_.look_at_z += left.z;
+		//
+		//		renderer_->MoveEye(camera_);
+		//
+		//		recenter_cursor();
+		//	});
 
 
 		while (msg.message != WM_QUIT)

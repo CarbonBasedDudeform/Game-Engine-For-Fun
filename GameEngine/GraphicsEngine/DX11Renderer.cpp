@@ -231,10 +231,10 @@ namespace Graphics
 		IRenderer::SetModelsToRender(models);
 	}
 
-	void DX11Renderer::MoveEye(const Camera& pos)
+	void DX11Renderer::MoveCamera(const ICamera& camera)
 	{
-		DirectX::XMVECTOR eye = DirectX::XMVectorSet(pos.eye_x, pos.eye_y, pos.eye_z, 0.0f);
-		DirectX::XMVECTOR lookAt = DirectX::XMVectorSet(pos.look_at_x, pos.look_at_y, pos.look_at_z, 0.0f);
+		DirectX::XMVECTOR eye = camera.getEye(); //DirectX::XMVectorSet(pos.eye_x, pos.eye_y, pos.eye_z, 0.0f);
+		DirectX::XMVECTOR lookAt = camera.getLookAt();//DirectX::XMVectorSet(pos.look_at_x, pos.look_at_y, pos.look_at_z, 0.0f);
 		DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 		view = DirectX::XMMatrixLookAtLH(eye, lookAt, up);
 	}
