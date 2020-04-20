@@ -1,22 +1,113 @@
 #include "Window.h"
 #include "DX11Renderer.h"
-#include <gainput\gainput.h>
 
-enum Button
+#include <gainput/gainput.h>
+
+namespace PAL
 {
-	Down,
-	Up,
-	Left,
-	Right,
-	VerticalLook,
-	HorizontalLook
-};
+	class InputManager
+	{
+	public:
+		enum Button
+		{
+			Down,
+			Up,
+			Left,
+			Right,
+			VerticalLook,
+			HorizontalLook
+		};
+
+		using Action = std::function<void()>;
+		using Axis = std::function<void(float)>;
+		
+		void init();
+		void registerAction(Button button, const Action&& action);
+		void registerAxis(Button button, const Axis&& axis);
+		void process(const MSG& msg);
+		void update();
+
+	private:
+		std::unordered_map<Button, std::vector<Action>> action_map_{};
+		std::unordered_map<Button, std::vector<Axis>> axis_map_{};
+
+		gainput::InputManager manager_{};
+		gainput::InputMap map_{ manager_ };
+		int supress_count_{};
+	};
+}
+
+
+void PAL::InputManager::init()
+{
+
+	manager_.SetDisplaySize(1920, 1080);
+	const gainput::DeviceId keyboardId = manager_.CreateDevice<gainput::InputDeviceKeyboard>();
+	const gainput::DeviceId mouseId = manager_.CreateDevice<gainput::InputDeviceMouse>();
+	const gainput::DeviceId padId = manager_.CreateDevice<gainput::InputDevicePad>();
+	const gainput::DeviceId touchId = manager_.CreateDevice<gainput::InputDeviceTouch>();
+	//keyboard
+	map_.MapBool(Down, keyboardId, gainput::KeyS);
+	map_.MapBool(Up, keyboardId, gainput::KeyW);
+	map_.MapBool(Left, keyboardId, gainput::KeyA);
+	map_.MapBool(Right, keyboardId, gainput::KeyD);
+	map_.MapFloat(VerticalLook, mouseId, gainput::MouseAxisY);
+	map_.MapFloat(HorizontalLook, mouseId, gainput::MouseAxisX);
+}
+
+void PAL::InputManager::process(const MSG& msg)
+{
+	manager_.Update();
+	manager_.HandleMessage(msg);
+}
+
+void PAL::InputManager::registerAction(Button button, const Action&& action)
+{
+	action_map_[button].emplace_back(action);
+}
+
+void PAL::InputManager::registerAxis(Button button, const Axis&& axis)
+{
+	axis_map_[button].emplace_back(axis);
+}
+
+void PAL::InputManager::update()
+{
+	for (auto&& [button, actions] : action_map_)
+	{
+		if (map_.GetBool(button))
+		{
+			for (auto& action : actions)
+			{
+				action();
+			}
+		}
+	}
+
+	for (auto&& [button, axises] : axis_map_)
+	{
+		if (supress_count_ >= 50 && map_.GetFloatDelta(button) != 0.0)
+		{
+			for (auto& axis : axises)
+			{
+				axis(map_.GetFloatDelta(button));
+			}
+
+			supress_count_ = 0;
+		}
+
+		supress_count_++;
+	}
+}
+
+
+
 
 
 namespace Graphics
 {
 	void Window::Create(std::string const& title, size_t height, size_t width)
-	{	
+	{
 		WNDCLASSEX window;
 		ZeroMemory(&window, sizeof(window));
 		window.cbSize = sizeof(WNDCLASSEX);
@@ -37,12 +128,12 @@ namespace Graphics
 		renderer_->CreateContext(height, width, window_handle_);
 
 		ShowCursor(false);
-		
+
 	}
 
 	LRESULT Window::WndProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam)
 	{
-		switch(message)
+		switch (message)
 		{
 		case WM_DESTROY:
 			PostQuitMessage(0);
@@ -53,6 +144,7 @@ namespace Graphics
 	}
 
 	Window::Window(std::string& title, size_t height, size_t width, RendererTypes renderType)
+		: input_manager_(std::make_shared<PAL::InputManager>())
 	{
 		switch (renderType)
 		{
@@ -79,8 +171,8 @@ namespace Graphics
 	{
 		return {
 				a.y * b.z - a.z * b.y,
-				a.z * b.x -a.x * b.z ,
-				a.x*b.y - a.y * b.x
+				a.z * b.x - a.x * b.z ,
+				a.x * b.y - a.y * b.x
 		};
 	}
 
@@ -89,191 +181,156 @@ namespace Graphics
 		auto forward = Vector{ camera.eye_x - camera.look_at_x
 							 , camera.eye_y - camera.look_at_y
 							 , camera.eye_z - camera.look_at_z };
-		
+
 		normalize(forward);
 
 		return forward;
 	}
 
-	static int surpress_count = 0;
 	void Window::recenter_cursor()
 	{
 		POINT mouse_pos{};
 		GetCursorPos(&mouse_pos);
 		RECT window_rect;
 		GetWindowRect(window_handle_, &window_rect);
-		SetCursorPos((window_rect.left + window_rect.right)/2, (window_rect.bottom + window_rect.top)/2);
-		surpress_count = 0;
+		SetCursorPos((window_rect.left + window_rect.right) / 2, (window_rect.bottom + window_rect.top) / 2);
 	}
 
 	void Window::Loop() {
 		MSG msg;
 		ZeroMemory(&msg, sizeof(msg));
+		//set up input manager
+		input_manager_->init();
 
-		gainput::InputManager manager;
-		
-		manager.SetDisplaySize(1920,1080);
-		const gainput::DeviceId keyboardId = manager.CreateDevice<gainput::InputDeviceKeyboard>();
-		const gainput::DeviceId mouseId = manager.CreateDevice<gainput::InputDeviceMouse>();
-		const gainput::DeviceId padId = manager.CreateDevice<gainput::InputDevicePad>();
-		const gainput::DeviceId touchId = manager.CreateDevice<gainput::InputDeviceTouch>();
+		input_manager_->registerAction(PAL::InputManager::Down, [&]()
+			{
+				//calc forward vector
+				//flip it
+				//move that way
 
-		//map.GetManager
-		auto map = gainput::InputMap(manager);
+				auto forward = calcForward(camera_);
 
-		//keyboard
-		map.MapBool(Down, keyboardId, gainput::KeyS);
-		map.MapBool(Up, keyboardId, gainput::KeyW);
-		map.MapBool(Left, keyboardId, gainput::KeyA);
-		map.MapBool(Right, keyboardId, gainput::KeyD);
-		map.MapFloat(VerticalLook, mouseId, gainput::MouseAxisY);
-		map.MapFloat(HorizontalLook, mouseId, gainput::MouseAxisX);
-		
-		
+				forward.x *= 0.01;
+				forward.y *= 0.01;
+				forward.z *= 0.01;
+
+				camera_.eye_x += forward.x;
+				camera_.eye_y += forward.y;
+				camera_.eye_z += forward.z;
+
+				camera_.look_at_x += forward.x;
+				camera_.look_at_y += forward.y;
+				camera_.look_at_z += forward.z;
+				renderer_->MoveEye(camera_);
+			});
+
+		input_manager_->registerAction(PAL::InputManager::Up, [&]()
+			{
+				//calc forward vector
+				//move that way
+				auto forward = calcForward(camera_);
+
+				forward.x *= -1;
+				forward.y *= -1;
+				forward.z *= -1;
+
+				forward.x *= 0.01;
+				forward.y *= 0.01;
+				forward.z *= 0.01;
+
+				camera_.eye_x += forward.x;
+				camera_.eye_y += forward.y;
+				camera_.eye_z += forward.z;
+
+				camera_.look_at_x += forward.x;
+				camera_.look_at_y += forward.y;
+				camera_.look_at_z += forward.z;
+				renderer_->MoveEye(camera_);
+			});
+
+		input_manager_->registerAction(PAL::InputManager::Left, [&]()
+			{
+				//calc forward vector
+						//rotate it 90 around up vector.
+						//move that way
+				auto const forward = calcForward(camera_);
+				auto const up = Vector{ 0, 1, 0 };
+				auto left = cross(forward, up);
+
+				left.x *= -0.01;
+				left.y *= -0.01;
+				left.z *= -0.01;
+
+				camera_.eye_x += left.x;
+				camera_.eye_y += left.y;
+				camera_.eye_z += left.z;
+
+				camera_.look_at_x += left.x;
+				camera_.look_at_y += left.y;
+				camera_.look_at_z += left.z;
+				renderer_->MoveEye(camera_);
+			});
+
+		input_manager_->registerAction(PAL::InputManager::Right, [&]()
+			{
+				auto const forward = calcForward(camera_);
+				auto const up = Vector{ 0, 1, 0 };
+				auto right = cross(forward, up);
+
+				right.x *= 0.01;
+				right.y *= 0.01;
+				right.z *= 0.01;
+
+				camera_.eye_x += right.x;
+				camera_.eye_y += right.y;
+				camera_.eye_z += right.z;
+
+				camera_.look_at_x += right.x;
+				camera_.look_at_y += right.y;
+				camera_.look_at_z += right.z;
+				renderer_->MoveEye(camera_);
+			});
+
+		input_manager_->registerAxis(PAL::InputManager::VerticalLook, [&](float delta)
+			{
+				camera_.look_at_y += delta * -500;
+				renderer_->MoveEye(camera_);
+				recenter_cursor();
+			});
+
+		input_manager_->registerAxis(PAL::InputManager::HorizontalLook, [&](float delta)
+			{
+				auto const forward = calcForward(camera_);
+				auto const up = Vector{ 0, 1, 0 };
+				auto left = cross(forward, up);
+
+				left.x *= -1 * (delta > 0 ? -1 : 1);
+				left.y *= -1 * (delta > 0 ? -1 : 1);
+				left.z *= -1 * (delta > 0 ? -1 : 1);
+
+				camera_.look_at_x += left.x;
+				camera_.look_at_y += left.y;
+				camera_.look_at_z += left.z;
+
+				renderer_->MoveEye(camera_);
+
+				recenter_cursor();
+			});
+
+
 		while (msg.message != WM_QUIT)
 		{
-			
-			manager.Update();
+
+
 			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 			{
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
-				manager.HandleMessage(msg);
+				input_manager_->process(msg);
 			}
-			
-			{
-				//update_func_();
 
-				if (map.GetBool(Down))
-				{
-					//calc forward vector
-					//flip it
-					//move that way
-					auto forward = calcForward(camera_);
-
-					forward.x *= 0.01;
-					forward.y *= 0.01;
-					forward.z *= 0.01;
-					
-					camera_.eye_x += forward.x;
-					camera_.eye_y += forward.y;
-					camera_.eye_z += forward.z;
-
-					camera_.look_at_x += forward.x;
-					camera_.look_at_y += forward.y;
-					camera_.look_at_z += forward.z;
-					renderer_->MoveEye(camera_);
-				}
-
-				if (map.GetBool(Up))
-				{
-					//calc forward vector
-					//move that way
-					auto forward = calcForward(camera_);
-
-					forward.x *= -1;
-					forward.y *= -1;
-					forward.z *= -1;
-					
-					forward.x *= 0.01;
-					forward.y *= 0.01;
-					forward.z *= 0.01;
-					
-					camera_.eye_x += forward.x;
-					camera_.eye_y += forward.y;
-					camera_.eye_z += forward.z;
-
-					camera_.look_at_x += forward.x;
-					camera_.look_at_y += forward.y;
-					camera_.look_at_z += forward.z;
-					renderer_->MoveEye(camera_);
-				}
-
-				if (map.GetBool(Left))
-				{
-					//calc forward vector
-					//rotate it 90 around up vector.
-					//move that way
-					auto const forward = calcForward(camera_);
-					auto const up = Vector{ 0, 1, 0 };
-					auto left = cross(forward, up);
-
-					left.x *= -0.01;
-					left.y *= -0.01;
-					left.z *= -0.01;
-					
-					camera_.eye_x += left.x;
-					camera_.eye_y += left.y;
-					camera_.eye_z += left.z;
-
-					camera_.look_at_x += left.x;
-					camera_.look_at_y += left.y;
-					camera_.look_at_z += left.z;
-					renderer_->MoveEye(camera_);
-				}
-				
-				if (map.GetBool(Right))
-				{
-					auto const forward = calcForward(camera_);
-					auto const up = Vector{ 0, 1, 0 };
-					auto right = cross(forward, up);
-
-					right.x *= 0.01;
-					right.y *= 0.01;
-					right.z *= 0.01;
-
-					camera_.eye_x += right.x;
-					camera_.eye_y += right.y;
-					camera_.eye_z += right.z;
-
-					camera_.look_at_x += right.x;
-					camera_.look_at_y += right.y;
-					camera_.look_at_z += right.z;
-					renderer_->MoveEye(camera_);
-				}
-
-
-				if (surpress_count >= 50)
-				{
-					if (map.GetFloatDelta(VerticalLook) != 0.0)
-					{
-						auto const delta = map.GetFloatDelta(VerticalLook);
-						camera_.look_at_y += delta * -500;
-						//camera_.look_at_y = std::clamp(camera_.look_at_y, -10.0f, 10.0f);
-						renderer_->MoveEye(camera_);
-						//SetCursorPos(1920 / 2, 1080 / 2);
-						recenter_cursor();
-					}
-
-					if (map.GetFloatDelta(HorizontalLook) != 0.0)
-					{
-						auto const delta = map.GetFloatDelta(HorizontalLook);
-						//camera_.look_at_x += delta * 500;
-						//
-						auto const forward = calcForward(camera_);
-						auto const up = Vector{ 0, 1, 0 };
-						auto left = cross(forward, up);
-
-						left.x *= -1 * (delta > 0 ? -1 : 1);
-						left.y *= -1 * (delta > 0 ? -1 : 1);
-						left.z *= -1 * (delta > 0 ? -1 : 1);
-
-						camera_.look_at_x += left.x;
-						camera_.look_at_y += left.y;
-						camera_.look_at_z += left.z;
-						//camera_.look_at_x = std::clamp(camera_.look_at_x, -10.0f, 10.0f);
-						renderer_->MoveEye(camera_);
-
-						//SetCursorPos(1920 / 2, 1080 / 2);
-						recenter_cursor();
-					}
-				}else
-				{
-					surpress_count++;
-				}
-
-				renderer_->Render();
-			}
+			input_manager_->update();
+			renderer_->Render();
 		}
 	}
 
