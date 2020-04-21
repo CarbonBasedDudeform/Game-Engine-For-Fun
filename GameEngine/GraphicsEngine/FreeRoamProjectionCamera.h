@@ -19,6 +19,8 @@ namespace Graphics
 		void moveForward() override;
 		void moveLeft() override;
 		void moveRight() override;
+		void rotatePitch(float delta) override;
+		void rotateYaw(float delta) override;
 
 	private:
 		DirectX::XMVECTOR eye_;

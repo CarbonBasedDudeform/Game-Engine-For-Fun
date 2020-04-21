@@ -57,7 +57,6 @@ void PAL::InputManager::init()
 
 void PAL::InputManager::process(const MSG& msg)
 {
-	manager_.Update();
 	manager_.HandleMessage(msg);
 }
 
@@ -73,6 +72,8 @@ void PAL::InputManager::registerAxis(Button button, const Axis&& axis)
 
 void PAL::InputManager::update()
 {
+	manager_.Update();
+	
 	for (auto&& [button, actions] : action_map_)
 	{
 		if (map_.GetBool(button))
@@ -86,7 +87,7 @@ void PAL::InputManager::update()
 
 	for (auto&& [button, axises] : axis_map_)
 	{
-		if (supress_count_ >= 50 && map_.GetFloatDelta(button) != 0.0)
+		if (supress_count_ >= 10 && map_.GetFloatDelta(button) != 0.0)
 		{
 			for (auto& axis : axises)
 			{
@@ -154,30 +155,6 @@ namespace Graphics
 		Create(title, height, width);
 	}
 
-	float magnitude(const Vector& vec)
-	{
-		return sqrt((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z));
-	}
-
-	void normalize(Vector& vec)
-	{
-		auto const mag = magnitude(vec);
-		vec.x /= mag;
-		vec.y /= mag;
-		vec.z /= mag;
-	}
-
-	Vector cross(const Vector& a, const Vector& b)
-	{
-		return {
-				a.y * b.z - a.z * b.y,
-				a.z * b.x - a.x * b.z ,
-				a.x * b.y - a.y * b.x
-		};
-	}
-
-	
-
 	void Window::recenter_cursor()
 	{
 		POINT mouse_pos{};
@@ -217,37 +194,23 @@ namespace Graphics
 				renderer_->MoveCamera(camera_);
 			});
 
-		//input_manager_->registerAxis(PAL::InputManager::VerticalLook, [&](float delta)
-		//	{
-		//		camera_.look_at_y += delta * -500;
-		//		renderer_->MoveEye(camera_);
-		//		recenter_cursor();
-		//	});
-		//
-		//input_manager_->registerAxis(PAL::InputManager::HorizontalLook, [&](float delta)
-		//	{
-		//		auto const forward = calcForward(camera_);
-		//		auto const up = Vector{ 0, 1, 0 };
-		//		auto left = cross(forward, up);
-		//
-		//		left.x *= -1 * (delta > 0 ? -1 : 1);
-		//		left.y *= -1 * (delta > 0 ? -1 : 1);
-		//		left.z *= -1 * (delta > 0 ? -1 : 1);
-		//
-		//		camera_.look_at_x += left.x;
-		//		camera_.look_at_y += left.y;
-		//		camera_.look_at_z += left.z;
-		//
-		//		renderer_->MoveEye(camera_);
-		//
-		//		recenter_cursor();
-		//	});
+		input_manager_->registerAxis(PAL::InputManager::VerticalLook, [&](float delta)
+			{
+				camera_.rotatePitch(delta);
+				renderer_->MoveCamera(camera_);
+				recenter_cursor();
+			});
+		
+		input_manager_->registerAxis(PAL::InputManager::HorizontalLook, [&](float delta)
+			{
+				camera_.rotateYaw(delta);
+				renderer_->MoveCamera(camera_);
+				recenter_cursor();
+			});
 
 
 		while (msg.message != WM_QUIT)
 		{
-
-
 			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 			{
 				TranslateMessage(&msg);

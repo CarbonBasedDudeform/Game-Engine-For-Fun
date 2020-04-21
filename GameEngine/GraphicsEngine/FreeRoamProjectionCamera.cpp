@@ -72,4 +72,19 @@ namespace  Graphics
 		eye_ = DirectX::XMVectorAdd(eye_, left);
 		look_at_ = DirectX::XMVectorAdd(look_at_, left);
 	}
+
+	void FreeRoamProjectionCamera::rotatePitch(float delta)
+	{
+		auto adjustment = DirectX::XMVectorSet(0, (delta > 0 ? 0.1 : -0.1), 0, 0);
+		look_at_ = DirectX::XMVectorAdd(look_at_, adjustment);
+	}
+
+	void FreeRoamProjectionCamera::rotateYaw(float delta)
+	{
+		auto const forward = calcForward(*this);
+		auto const up = DirectX::XMVectorSet(0, 1, 0, 0);
+		auto left = DirectX::XMVector3Cross(forward, up);
+		left = DirectX::XMVectorScale(left, (delta > 0 ? 0.1 : -0.1));
+		look_at_ = DirectX::XMVectorAdd(look_at_, left);
+	}
 }
