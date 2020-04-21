@@ -2,7 +2,6 @@
 
 #pragma warning(push, 0) //disable warnings for external headers
 #include <Windows.h>
-
 #include <string>
 #include <functional>
 #include <memory>
@@ -10,9 +9,15 @@
 
 
 #include "IRenderer.h"
+#include "FreeRoamProjectionCamera.h"
 #include "Model.h"
 
 #define MAIN int CALLBACK WinMain(__in  HINSTANCE hInstance,__in  HINSTANCE hPrevInstance,__in  LPSTR lpCmdLine,__in  int nCmdShow)
+
+namespace PAL
+{
+	class InputManager;
+}
 
 namespace Graphics
 {
@@ -35,6 +40,8 @@ namespace Graphics
 		 
 		std::unique_ptr<IRenderer> renderer_;
 		UpdateFunc update_func_{};
-		Graphics::IRenderer::Camera camera_{0, 2.5f, -10.0f};
+
+		std::shared_ptr<PAL::InputManager> input_manager_{};
+		Graphics::FreeRoamProjectionCamera camera_{0, 2.5f, -10.0f};
 	};
 }
