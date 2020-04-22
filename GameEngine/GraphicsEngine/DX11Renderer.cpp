@@ -44,7 +44,7 @@ namespace Graphics
 		projection = DirectX::XMMatrixPerspectiveFovLH(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
 		//projection = DirectX::XMMatrixOrthographicLH(width, height, 0.1f, 1000.0f);
 
-		DirectX::XMVECTOR eye = DirectX::XMVectorSet(0.0f, 5.0f, eye_y, 0.0f);
+		DirectX::XMVECTOR eye = DirectX::XMVectorSet(0.0f, 5.0f, 0.0f, 0.0f);
 		DirectX::XMVECTOR lookAt = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 		DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 		view = DirectX::XMMatrixLookAtLH(eye, lookAt, up);

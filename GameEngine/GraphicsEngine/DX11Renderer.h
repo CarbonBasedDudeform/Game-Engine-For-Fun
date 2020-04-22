@@ -11,15 +11,6 @@
 #include <map>
 #pragma warning(pop) //enable warnings again
 
-//#include <gainput\gainput.h>
-//using Matrix = float[4][4];
-
-
-
-struct WorldViewProject {
-	
-};
-
 struct Renderable {
 	ID3D11Buffer* vertices_buffer;
 	//ID3D11Buffer* index_buffer;
@@ -87,7 +78,6 @@ namespace Graphics
 		DirectX::XMMATRIX world;
 		DirectX::XMMATRIX view;
 		DirectX::XMMATRIX projection;
-		float eye_y{ -10 };
 
 		std::map<int, TextureStore> texture_pool_{};
 		ID3D11Buffer* verts;
