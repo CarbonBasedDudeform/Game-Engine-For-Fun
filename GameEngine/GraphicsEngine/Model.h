@@ -41,27 +41,15 @@ namespace Graphics
 	
 	using ImageData = unsigned char*;
 
-	struct PNGTexture
+	struct PNG
 	{
 		int Id, Width, Height, Comp;
 		ImageData Data;
 	};
 
-	using Material = PNGTexture;
+	using Image = PNG;
 
-	using Materials = std::vector<std::string>;
-
-	struct Mesh
-	{
-		int id;
-		//std::vector<Vertex> vertices;
-		int start, size;
-		//std::vector<unsigned int> indices;
-		
-		//std::shared_ptr<Material> texture;
-	};
-
-	using Meshes = std::vector<Mesh>;
+	using MaterialNames = std::vector<std::string>;
 
 	class Model
 	{
@@ -69,18 +57,13 @@ namespace Graphics
 		Model(std::filesystem::path const& filename);
 
 		bool isOk() const;
-		const Meshes& getMeshes() const;
 		ConstantBuffer constant_buffer{};
-		std::shared_ptr<Material> getTexture(const std::string& name);
-		std::vector<Vertex> vertices;
-		std::vector<unsigned int> indices;
-		Materials getMaterials() const;
+		std::shared_ptr<Image> getImage(const std::string& name);
+		MaterialNames getMaterialNames() const;
 		std::map<std::string, std::vector<Vertex>> texture_verts_bucket;
-		std::map<std::string, std::vector<unsigned int>> texture_idx_bucket;
 	private:
 		bool loaded_okay_{};
-		Meshes meshes_;
-		std::map<std::string, std::shared_ptr<Material>> materials_;
+		std::map<std::string, std::shared_ptr<Image>> materials_;
 	};
 
 	using Models = std::vector<Model>;

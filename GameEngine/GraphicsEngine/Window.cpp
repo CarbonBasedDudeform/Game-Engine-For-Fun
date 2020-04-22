@@ -87,7 +87,7 @@ void PAL::InputManager::update()
 
 	for (auto&& [button, axises] : axis_map_)
 	{
-		if (supress_count_ >= 10 && map_.GetFloatDelta(button) != 0.0)
+		if (supress_count_ >= 50 && map_.GetFloatDelta(button) != 0.0)
 		{
 			for (auto& axis : axises)
 			{

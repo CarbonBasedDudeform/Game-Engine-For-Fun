@@ -28,7 +28,7 @@ namespace Graphics
 		{
 			auto& material = materials[i];
 			auto const texture_path = parent / std::filesystem::path{ material.diffuse_texname };
-			auto texture = std::make_shared<Material>();
+			auto texture = std::make_shared<Image>();
 			texture->Data = stbi_load(texture_path.string().c_str(), &texture->Width, &texture->Height, &texture->Comp, STBI_rgb_alpha);
 			texture->Id = i;
 			materials_[material.name] = std::move(texture);
@@ -37,11 +37,7 @@ namespace Graphics
 		int count = 0;
 		for (auto& shape : shapes)
 		{
-			
 			auto index_offset = 0;
-			auto mesh = Mesh{};
-			mesh.id = count++;
-			mesh.start = indices.size();
 
 			for (int f = 0; f < shape.mesh.num_face_vertices.size(); f++)
 			{
@@ -51,15 +47,12 @@ namespace Graphics
 				auto const texture_index = shape.mesh.material_ids[f];
 				auto const material_name = materials[texture_index].name;
 				bool const material_doesnt_exist = materials_.find(material_name) == materials_.end();
-				if (material_doesnt_exist) throw std::exception{ "Trying to use non-existant material" };
-				//bool not_leaf = material_name != "leaf";
-				//mesh.texture = materials_[material_name];
-				
+				if (material_doesnt_exist) throw std::exception{ "Trying to use non-existent material" };
+		
 				for (int v = 0; v < fv; v++)
 				{
 					auto idx = shape.mesh.indices[index_offset + v];
 					bool const texture_coords_exist = idx.texcoord_index != -1;
-					texture_idx_bucket[material_name].push_back(indices.size());
 					texture_verts_bucket[material_name].push_back(Vertex{ attribute.vertices[3*idx.vertex_index + 0], 
 													attribute.vertices[3*idx.vertex_index + 1], 
 													attribute.vertices[3*idx.vertex_index + 2],
@@ -69,24 +62,20 @@ namespace Graphics
 				}
 
 				index_offset += fv;
-				
-				 
-				
 			}
-			mesh.size = indices.size() - mesh.start;
-			meshes_.emplace_back(mesh);
 		}
 
-		
+
+		loaded_okay_ = true;
 		if (!warn.empty()) {
 			std::cout << warn << std::endl;
+			loaded_okay_ = false;
 		}
 		
 		if (!err.empty()) {
+			loaded_okay_ = false;
 			std::cerr << err << std::endl;
 		}
-
-		//constant_buffer.rotation = makeRotationMatrixUsingRadians(3.14/3.0 * 2);
 	}
 
 	bool Model::isOk() const
@@ -94,14 +83,9 @@ namespace Graphics
 		return loaded_okay_;
 	}
 
-	const Meshes& Model::getMeshes() const
+	MaterialNames Model::getMaterialNames() const
 	{
-		return meshes_;
-	}
-
-	Materials Model::getMaterials() const
-	{
-		auto result = Materials{};
+		auto result = MaterialNames{};
 		for (auto& material : materials_)
 		{
 			result.push_back(material.first);
@@ -110,18 +94,8 @@ namespace Graphics
 		return result;
 	}
 
-	std::shared_ptr<Material> Model::getTexture(const std::string& name)
+	std::shared_ptr<Image> Model::getImage(const std::string& name)
 	{
 		return materials_[name];
-	}
-
-	Rotation makeRotationMatrixUsingRadians(float amount) noexcept
-	{
-			return {
-				{ cos(amount),0, -sin(amount), 0},
-				{ 0         ,1,           0, 0},
-				{sin(amount) ,0,  cos(amount), 0},
-				{ 0         ,0,           0, 1}
-			};
 	}
 }

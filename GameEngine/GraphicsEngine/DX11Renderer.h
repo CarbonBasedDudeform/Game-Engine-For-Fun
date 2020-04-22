@@ -11,25 +11,16 @@
 #include <map>
 #pragma warning(pop) //enable warnings again
 
-//#include <gainput\gainput.h>
-//using Matrix = float[4][4];
-
-
-
-struct WorldViewProject {
-	
-};
-
 struct Renderable {
 	ID3D11Buffer* vertices_buffer;
-	ID3D11Buffer* index_buffer;
+	//ID3D11Buffer* index_buffer;
 	UINT index_count;
 	ID3D11ShaderResourceView* texture_view;
 	ID3D11Texture2D* texture;
 	ID3D11Buffer* constant_buffer;
 	std::vector<Graphics::Vertex> vertices;
-	std::vector<unsigned int> idxs;
-	int start;
+	//std::vector<unsigned int> idxs;
+	//int start;
 };
 
 using Renderables = std::map<int, Renderable>; //<id, target>
@@ -53,10 +44,9 @@ namespace Graphics
 	private:
 		void createVertexBuffer(ID3D11Buffer** buffer, const std::vector<Vertex>& vertices);
 		void createIndicesBuffer(ID3D11Buffer** buffer, const std::vector<unsigned int>& indices);
-		void createTexture(ID3D11Texture2D** texture, ID3D11ShaderResourceView** texture_view, const Material& const material);
+		void createTexture(ID3D11Texture2D** texture, ID3D11ShaderResourceView** texture_view, const Image& const material);
 		void createConstantBuffer(ID3D11Buffer** constant_buffer);
-		void setupNewMesh(const Mesh& const mesh);
-
+		
 	private:
 		struct TextureStore
 		{
@@ -88,7 +78,6 @@ namespace Graphics
 		DirectX::XMMATRIX world;
 		DirectX::XMMATRIX view;
 		DirectX::XMMATRIX projection;
-		float eye_y{ -10 };
 
 		std::map<int, TextureStore> texture_pool_{};
 		ID3D11Buffer* verts;
