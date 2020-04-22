@@ -77,7 +77,7 @@ namespace Graphics
 		swap_chain_desc.BufferDesc.Width = width;
 		swap_chain_desc.BufferDesc.Height = height;
 		swap_chain_desc.OutputWindow = windowHandle;
-		swap_chain_desc.Windowed = false;
+		swap_chain_desc.Windowed = true;
 
 
 		DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullScreenDesc;
@@ -233,8 +233,8 @@ namespace Graphics
 
 	void DX11Renderer::MoveCamera(const ICamera& camera)
 	{
-		DirectX::XMVECTOR eye = camera.getEye(); //DirectX::XMVectorSet(pos.eye_x, pos.eye_y, pos.eye_z, 0.0f);
-		DirectX::XMVECTOR lookAt = camera.getLookAt();//DirectX::XMVectorSet(pos.look_at_x, pos.look_at_y, pos.look_at_z, 0.0f);
+		DirectX::XMVECTOR eye = camera.getEye();
+		DirectX::XMVECTOR lookAt = camera.getLookAt();
 		DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 		view = DirectX::XMMatrixLookAtLH(eye, lookAt, up);
 	}
@@ -269,7 +269,7 @@ namespace Graphics
 		device_->CreateBuffer(&index_buffer_desc, &index_buffer_sub_resource, buffer);
 	}
 
-	void DX11Renderer::createTexture(ID3D11Texture2D** texture, ID3D11ShaderResourceView** texture_view, const Material& const material)
+	void DX11Renderer::createTexture(ID3D11Texture2D** texture, ID3D11ShaderResourceView** texture_view, const Image& const material)
 	{
 		if (texture_pool_.count(material.Id))
 		{
@@ -312,30 +312,11 @@ namespace Graphics
 	void DX11Renderer::createConstantBuffer(ID3D11Buffer** constant_buffer)
 	{
 		D3D11_BUFFER_DESC cbd{ 0 };
-		cbd.ByteWidth = sizeof(ConstantBuffer);//16 + 64; //sizeof(constant buffer struct) ??
+		cbd.ByteWidth = sizeof(ConstantBuffer);
 		cbd.Usage = D3D11_USAGE_DEFAULT;
 		cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 
 		device_->CreateBuffer(&cbd, 0, constant_buffer);
-	}
-
-	void DX11Renderer::setupNewMesh(const Mesh& const mesh)
-	{
-		auto& new_renderable = renderables_[mesh.id];
-		new_renderable.index_count = mesh.size;
-		new_renderable.start = mesh.start;
-
-		//createVertexBuffer(&new_renderable.vertices_buffer, mesh.vertices);
-		//createIndicesBuffer(&new_renderable.index_buffer, mesh.indices);
-
-		//auto& texture = mesh.texture;
-		//bool const texture_exists = texture && texture->Data;
-		//if (texture_exists)
-		//{
-		//	createTexture(&new_renderable.texture, &new_renderable.texture_view, *mesh.texture);
-		//}
-
-		createConstantBuffer(&new_renderable.constant_buffer);
 	}
 
 	void DX11Renderer::Render()
@@ -352,23 +333,18 @@ namespace Graphics
 
 		for(auto& model : scene_models_)
 		{
-			auto const materials = model.getMaterials();
+			auto const materials = model.getMaterialNames();
 
 			for (std::string material_name  : materials)
 			{
-				const auto& texture = model.getTexture(material_name);
+				const auto& texture = model.getImage(material_name);
 				
 				auto& to_render = renderables_[texture->Id];
 
 				if (to_render.vertices.empty())
 				{
-					//for (auto mesh : model.getMeshes()) //well this sure is nasty
-					{
-						
-
 						to_render.vertices = model.texture_verts_bucket[material_name];
-						to_render.idxs = model.texture_idx_bucket[material_name];
-					}
+										
 				}
 				if (!to_render.texture && texture  && texture->Data)
 				{
@@ -381,11 +357,10 @@ namespace Graphics
 					to_render.index_count = to_render.vertices.size();
 				}
 				
-				if (!to_render.index_buffer)
-				{
-					createIndicesBuffer(&to_render.index_buffer, to_render.idxs);
-					//to_render.index_count = texture_idxs.size();
-				}
+				//if (!to_render.index_buffer)
+				//{
+				//	createIndicesBuffer(&to_render.index_buffer, to_render.idxs);
+				//}
 
 				if (!to_render.constant_buffer)
 				{
@@ -397,7 +372,7 @@ namespace Graphics
 				
 				context_->IASetVertexBuffers(0, 1, &to_render.vertices_buffer, &stride, &offset);
 				context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-				context_->IASetIndexBuffer(to_render.index_buffer, DXGI_FORMAT_R32_UINT, 0);
+				//context_->IASetIndexBuffer(to_render.index_buffer, DXGI_FORMAT_R32_UINT, 0);
 
 				model.constant_buffer.world = DirectX::XMMatrixTranspose(world);
 				model.constant_buffer.view = DirectX::XMMatrixTranspose(view);
@@ -407,64 +382,10 @@ namespace Graphics
 				context_->VSSetConstantBuffers(0, 1, &to_render.constant_buffer);
 				
 				if (to_render.texture_view) context_->PSSetShaderResources(0, 1, &to_render.texture_view);
-				
-				//context_->DrawIndexed(to_render.index_count, to_render.start, 0);
+
 				context_->Draw(to_render.index_count, 0);
 			}
 		}
-		
-		//for (auto& cur_model : scene_models_) 
-		//{
-		//	auto materials = cur_model.getMaterials();
-		//	for (auto mat : materials)
-		//	{
-		//		TextureStore temp;
-		//		auto tex = cur_model.getTexture(mat);
-		//		createTexture(&temp.texture, &temp.view, *tex);
-		//	}
-		//
-		//	
-		//
-		//	for (auto& mesh : cur_model.getMeshes())
-		//	{
-		//		if (!verts)
-		//		{
-		//			createVertexBuffer(&verts, cur_model.vertices);
-		//			auto const stride = UINT{ sizeof(Vertex) };
-		//			auto const offset = UINT{ 0 };
-		//
-		//			context_->IASetVertexBuffers(0, 1, &verts, &stride, &offset);
-		//			context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		//		}
-		//		if (!idxs)
-		//		{
-		//			createIndicesBuffer(&idxs, cur_model.indices);
-		//			context_->IASetIndexBuffer(idxs, DXGI_FORMAT_R32_UINT, 0);
-		//		}
-		//		
-		//		bool const mesh_is_fresh = renderables_.count(mesh.id) == 0;
-		//		if (mesh_is_fresh) 
-		//		{
-		//			setupNewMesh(mesh);
-		//		}
-		//
-		//		auto& to_render = renderables_[mesh.id];
-		//		
-		//		
-		//
-		//		cur_model.constant_buffer.world = DirectX::XMMatrixTranspose(world);
-		//		cur_model.constant_buffer.view = DirectX::XMMatrixTranspose(view);
-		//		cur_model.constant_buffer.projection = DirectX::XMMatrixTranspose(projection);
-		//		context_->UpdateSubresource(to_render.constant_buffer, 0, 0, &cur_model.constant_buffer, 0, 0);
-		//
-		//		context_->VSSetConstantBuffers(0, 1, &to_render.constant_buffer);
-		//
-		//		if (to_render.texture_view) context_->PSSetShaderResources(0, 1, &to_render.texture_view);
-		//
-		//		context_->DrawIndexed(to_render.index_count, to_render.start, 0);
-		//	}
-		//}
-		
 		
 		PostFrameRenderBehaviour();
 	}
