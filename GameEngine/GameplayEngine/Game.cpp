@@ -25,12 +25,12 @@ namespace Gameplay
 
 	void Game::Initialise(std::string& title, size_t width, size_t height)
 	{
-		_window = std::make_unique<Graphics::Window>(title, width, height, Graphics::RendererTypes::DX11);
+		_window = Graphics::Window(title, width, height, Graphics::RendererTypes::DX11);
 	}
 
 	void Game::Run()
 	{
-		_window->Update(_curScene->getModels(),
+		_window.Update(_curScene->getModels(),
 			[=] {
 				auto currentTime = _clock.now();
 				auto deltaTime = static_cast<GameTimeDelta>(currentTime - _lastUpdateTime);
@@ -38,11 +38,11 @@ namespace Gameplay
 				_lastUpdateTime = currentTime;
 			});
 		
-		_window->Loop();
+		_window.Loop();
 	}
 
-	void Game::SetScene(std::unique_ptr<Gameplay::Scene> scene)
+	void Game::SetScene(std::shared_ptr<Gameplay::Scene>& scene)
 	{
-		_curScene = std::move(scene);
+		_curScene = scene;
 	}
 }

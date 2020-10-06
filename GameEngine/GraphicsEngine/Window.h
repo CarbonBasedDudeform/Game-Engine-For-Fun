@@ -24,6 +24,7 @@ namespace Graphics
 	class Window final
 	{
 	public:
+		Window() = default;
 		Window(std::string& title, size_t height, size_t width, RendererTypes renderType);
 
 		void Update(Models const& current_scene_models, UpdateFunc const&& updateFunc);

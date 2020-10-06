@@ -20,10 +20,10 @@ class TestScene : public Gameplay::Scene
 
 MAIN
 {
-	auto game = std::make_unique<Gameplay::Game>();
-	game->Initialise(std::string("Demo App"), 1080, 1920);
+	auto game = Gameplay::Game{};
+	game.Initialise(std::string("Demo App"), 1080, 1920);
 
-	std::unique_ptr<Gameplay::Scene> scene = std::make_unique<TestScene>();
+	std::shared_ptr<Gameplay::Scene> scene = std::make_unique<TestScene>();
 	//scene->AddModel(std::filesystem::current_path() / "Models" / "Sphere" / "sphere.obj");
 	//scene->AddModel(std::filesystem::current_path() / "Models" / "Teapot" / "teapot.obj");
 	//scene->AddModel(std::filesystem::current_path() / "Models" / "Cube" / "cube.obj");
@@ -34,6 +34,6 @@ MAIN
 	//scene->AddModel(std::filesystem::current_path() / "Models" / "Sibenik" / "sibenik.obj");
 	//scene->AddModel(std::filesystem::current_path() / "Models" / "MultiModelTest" / "multimodeltest.obj");
 
-	game->SetScene(std::move(scene));
-	game->Run();
+	game.SetScene(scene); 
+	game.Run();
 }
