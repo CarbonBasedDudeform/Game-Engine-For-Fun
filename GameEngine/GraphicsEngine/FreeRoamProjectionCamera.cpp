@@ -33,7 +33,7 @@ namespace  Graphics
 		//move that way
 
 		auto forward = calcForward(*this);
-		forward = DirectX::XMVectorScale(forward, 0.01);
+		forward = DirectX::XMVectorScale(forward, move_speed_);
 		eye_ = DirectX::XMVectorAdd(eye_, forward);
 		look_at_ = DirectX::XMVectorAdd(look_at_, forward);
 	}
@@ -44,7 +44,7 @@ namespace  Graphics
 		//flip it
 		//move that way
 		auto forward = calcForward(*this);
-		forward = DirectX::XMVectorScale(forward, -0.01);
+		forward = DirectX::XMVectorScale(forward, -move_speed_);
 		eye_ = DirectX::XMVectorAdd(eye_, forward);
 		look_at_ = DirectX::XMVectorAdd(look_at_, forward);
 	}
@@ -58,7 +58,7 @@ namespace  Graphics
 		auto const forward = calcForward(*this);
 		auto const up = DirectX::XMVectorSet( 0, 1, 0, 0);
 		auto left = DirectX::XMVector3Cross(forward, up);
-		left = DirectX::XMVectorScale(left, -0.01);
+		left = DirectX::XMVectorScale(left, -move_speed_);
 		eye_ = DirectX::XMVectorAdd(eye_, left);
 		look_at_ = DirectX::XMVectorAdd(look_at_, left);
 	}
@@ -68,7 +68,7 @@ namespace  Graphics
 		auto const forward = calcForward(*this);
 		auto const up = DirectX::XMVectorSet(0, 1, 0, 0);
 		auto left = DirectX::XMVector3Cross(forward, up);
-		left = DirectX::XMVectorScale(left, 0.01);
+		left = DirectX::XMVectorScale(left, move_speed_);
 		eye_ = DirectX::XMVectorAdd(eye_, left);
 		look_at_ = DirectX::XMVectorAdd(look_at_, left);
 	}

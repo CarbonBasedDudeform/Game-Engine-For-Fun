@@ -25,5 +25,7 @@ namespace Graphics
 	private:
 		DirectX::XMVECTOR eye_;
 		DirectX::XMVECTOR look_at_{};
+
+		float move_speed_{ 0.1f };
 	};
 }

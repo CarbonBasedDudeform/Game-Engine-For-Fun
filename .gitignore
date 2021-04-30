@@ -86,3 +86,5 @@ GameEngine/GameplayEngine/x64/Debug/game.nativecodeanalysis.xml
 *.tmp
 
 *.FileListAbsolute.txt
+*.recipe
+CodeAnalysisResultManifest.txt

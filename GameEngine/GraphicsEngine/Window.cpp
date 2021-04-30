@@ -1,19 +1,17 @@
+
 #include "Window.h"
 #include "DX11Renderer.h"
 
-#include <gainput/gainput.h>
+#include "hidusage.h"
 
 namespace PAL
 {
 	class InputManager
 	{
 	public:
+		using Pressable = int;
 		enum Button
 		{
-			Down,
-			Up,
-			Left,
-			Right,
 			VerticalLook,
 			HorizontalLook
 		};
@@ -22,87 +20,69 @@ namespace PAL
 		using Axis = std::function<void(float)>;
 		
 		void init();
-		void registerAction(Button button, const Action&& action);
+		void registerAction(Pressable button, const Action&& action);
 		void registerAxis(Button button, const Axis&& axis);
 		void process(const MSG& msg);
 		void update();
 
 	private:
-		std::unordered_map<Button, std::vector<Action>> action_map_{};
-		std::unordered_map<Button, std::vector<Axis>> axis_map_{};
+		std::unordered_map<Pressable, Action> action_map_{};
+		std::unordered_map<Button, Axis> axis_map_{};
 
-		gainput::InputManager manager_{};
-		gainput::InputMap map_{ manager_ };
 		int supress_count_{};
+		float prev_delta_{};
 	};
 }
 
 
 void PAL::InputManager::init()
 {
+	RAWINPUTDEVICE rids[2];
 
-	manager_.SetDisplaySize(1920, 1080);
-	const gainput::DeviceId keyboardId = manager_.CreateDevice<gainput::InputDeviceKeyboard>();
-	const gainput::DeviceId mouseId = manager_.CreateDevice<gainput::InputDeviceMouse>();
-	const gainput::DeviceId padId = manager_.CreateDevice<gainput::InputDevicePad>();
-	const gainput::DeviceId touchId = manager_.CreateDevice<gainput::InputDeviceTouch>();
-	//keyboard
-	map_.MapBool(Down, keyboardId, gainput::KeyS);
-	map_.MapBool(Up, keyboardId, gainput::KeyW);
-	map_.MapBool(Left, keyboardId, gainput::KeyA);
-	map_.MapBool(Right, keyboardId, gainput::KeyD);
-	map_.MapFloat(VerticalLook, mouseId, gainput::MouseAxisY);
-	map_.MapFloat(HorizontalLook, mouseId, gainput::MouseAxisX);
+	rids[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
+	rids[0].usUsage = HID_USAGE_GENERIC_MOUSE;
+	rids[0].dwFlags = RIDEV_NOLEGACY;
+	rids[0].hwndTarget = 0;
+
+	rids[1].usUsagePage = HID_USAGE_PAGE_GENERIC;
+	rids[1].usUsage = HID_USAGE_GENERIC_KEYBOARD;
+	rids[1].dwFlags = RIDEV_NOLEGACY;
+	rids[1].hwndTarget = 0;
+
+	RegisterRawInputDevices(rids, 2, sizeof(rids[0]));
 }
 
 void PAL::InputManager::process(const MSG& msg)
 {
-	manager_.HandleMessage(msg);
+	if (msg.message == WM_INPUT)
+	{
+		RAWINPUT raw;
+		UINT size = sizeof(raw);
+
+		GetRawInputData((HRAWINPUT)msg.lParam, RID_INPUT, &raw, &size, sizeof(RAWINPUTHEADER));
+
+		if (raw.header.dwType == RIM_TYPEKEYBOARD && action_map_.contains(raw.data.keyboard.VKey))
+		{
+			action_map_[raw.data.keyboard.VKey]();
+		}
+		
+		if (raw.header.dwType == RIM_TYPEMOUSE)
+		{
+			axis_map_[Button::VerticalLook](raw.data.mouse.lLastY);
+			axis_map_[Button::HorizontalLook](raw.data.mouse.lLastX);
+		}
+	}
 }
 
-void PAL::InputManager::registerAction(Button button, const Action&& action)
+void PAL::InputManager::registerAction(Pressable button, const Action&& action)
 {
-	action_map_[button].emplace_back(action);
+	action_map_[button] = action;
 }
 
 void PAL::InputManager::registerAxis(Button button, const Axis&& axis)
 {
-	axis_map_[button].emplace_back(axis);
+	axis_map_[button] = axis;
 }
-
-void PAL::InputManager::update()
-{
-	manager_.Update();
-	
-	for (auto&& [button, actions] : action_map_)
-	{
-		if (map_.GetBool(button))
-		{
-			for (auto& action : actions)
-			{
-				action();
-			}
-		}
-	}
-
-	for (auto&& [button, axises] : axis_map_)
-	{
-		if (supress_count_ >= 50 && map_.GetFloatDelta(button) != 0.0)
-		{
-			for (auto& axis : axises)
-			{
-				axis(map_.GetFloatDelta(button));
-			}
-
-			supress_count_ = 0;
-		}
-
-		supress_count_++;
-	}
-}
-
-
-
 
 
 namespace Graphics
@@ -155,40 +135,36 @@ namespace Graphics
 		Create(title, height, width);
 	}
 
-	void Window::recenter_cursor()
-	{
-		POINT mouse_pos{};
-		GetCursorPos(&mouse_pos);
-		RECT window_rect;
-		GetWindowRect(window_handle_, &window_rect);
-		SetCursorPos((window_rect.left + window_rect.right) / 2, (window_rect.bottom + window_rect.top) / 2);
-	}
-
 	void Window::Loop() {
 		MSG msg;
 		ZeroMemory(&msg, sizeof(msg));
 		//set up input manager
 		input_manager_->init();
 
-		input_manager_->registerAction(PAL::InputManager::Down, [&]()
+		input_manager_->registerAction(VK_ESCAPE, [&]() 
+			{
+				std::quick_exit(0);
+			});
+
+		input_manager_->registerAction('S', [&]()
 			{
 				camera_.moveBack();
 				renderer_->MoveCamera(camera_);
 			});
 
-		input_manager_->registerAction(PAL::InputManager::Up, [&]()
+		input_manager_->registerAction('W', [&]()
 			{
 				camera_.moveForward();
 				renderer_->MoveCamera(camera_);
 			});
-
-		input_manager_->registerAction(PAL::InputManager::Left, [&]()
+		
+		input_manager_->registerAction('A', [&]()
 			{
 				camera_.moveLeft();
 				renderer_->MoveCamera(camera_);
 			});
-
-		input_manager_->registerAction(PAL::InputManager::Right, [&]()
+		
+		input_manager_->registerAction('D', [&]()
 			{
 				camera_.moveRight();
 				renderer_->MoveCamera(camera_);
@@ -198,14 +174,12 @@ namespace Graphics
 			{
 				camera_.rotatePitch(delta);
 				renderer_->MoveCamera(camera_);
-				recenter_cursor();
 			});
 		
 		input_manager_->registerAxis(PAL::InputManager::HorizontalLook, [&](float delta)
 			{
 				camera_.rotateYaw(delta);
 				renderer_->MoveCamera(camera_);
-				recenter_cursor();
 			});
 
 
@@ -218,7 +192,6 @@ namespace Graphics
 				input_manager_->process(msg);
 			}
 
-			input_manager_->update();
 			renderer_->Render();
 		}
 	}
