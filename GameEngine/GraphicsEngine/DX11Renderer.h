@@ -13,14 +13,11 @@
 
 struct Renderable {
 	ID3D11Buffer* vertices_buffer;
-	//ID3D11Buffer* index_buffer;
-	UINT index_count;
 	ID3D11ShaderResourceView* texture_view;
 	ID3D11Texture2D* texture;
 	ID3D11Buffer* constant_buffer;
+	UINT index_count;
 	std::vector<Graphics::Vertex> vertices;
-	//std::vector<unsigned int> idxs;
-	//int start;
 };
 
 using Renderables = std::map<int, Renderable>; //<id, target>
@@ -44,7 +41,7 @@ namespace Graphics
 	private:
 		void createVertexBuffer(ID3D11Buffer** buffer, const std::vector<Vertex>& vertices);
 		void createIndicesBuffer(ID3D11Buffer** buffer, const std::vector<unsigned int>& indices);
-		void createTexture(ID3D11Texture2D** texture, ID3D11ShaderResourceView** texture_view, const Image& const material);
+		void createTexture(ID3D11Texture2D** texture, ID3D11ShaderResourceView** texture_view, const Image& material);
 		void createConstantBuffer(ID3D11Buffer** constant_buffer);
 		
 	private:
@@ -56,6 +53,7 @@ namespace Graphics
 
 		Renderables renderables_;
 		Microsoft::WRL::ComPtr<IDXGISwapChain> swap_chain_{};
+
 		ID3D11Device* device_{};
 		ID3D11DeviceContext* context_{};
 		ID3D11VertexShader* vertex_shader_{};
@@ -68,21 +66,10 @@ namespace Graphics
 		ID3D11RenderTargetView* render_target_{};
 		ID3D11Texture2D* back_buffer_{};
 
-		ID3D11InputLayout* input_layout;
-		
-		//shaders into a shader struct?
-		ID3DBlob* vertex_shader_blob;
-		ID3DBlob* pixel_shader_blob;
-
-		ID3D11DepthStencilState* depthStencilState_;
-		DirectX::XMMATRIX world;
-		DirectX::XMMATRIX view;
-		DirectX::XMMATRIX projection;
+		DirectX::XMMATRIX world{};
+		DirectX::XMMATRIX view{};
+		DirectX::XMMATRIX projection{};
 
 		std::map<int, TextureStore> texture_pool_{};
-		ID3D11Buffer* verts;
-		ID3D11Buffer* idxs;
-		ID3D11SamplerState* m_sampleState;
-
 	};
 }

@@ -42,28 +42,20 @@ namespace Graphics
 		
 		world = DirectX::XMMatrixIdentity();
 		projection = DirectX::XMMatrixPerspectiveFovLH(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
-		//projection = DirectX::XMMatrixOrthographicLH(width, height, 0.1f, 1000.0f);
-
-		DirectX::XMVECTOR eye = DirectX::XMVectorSet(0.0f, 5.0f, 0.0f, 0.0f);
-		DirectX::XMVECTOR lookAt = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-		DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-		view = DirectX::XMMatrixLookAtLH(eye, lookAt, up);
-
 		
-
+		const DirectX::XMVECTOR eye = DirectX::XMVectorSet(0.0f, 5.0f, 0.0f, 0.0f);
+		const DirectX::XMVECTOR lookAt = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		const DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+		view = DirectX::XMMatrixLookAtLH(eye, lookAt, up);
 
 		D3D_FEATURE_LEVEL selectedFeatureLevel{};
 
-		UINT const createDeviceFlags = 0;
+		UINT constexpr createDeviceFlags = 0;
 		HRESULT hr;
 		if (FAILED((hr = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, featureLevels, ARRAYSIZE(featureLevels), D3D11_SDK_VERSION, &device_, &selectedFeatureLevel, &context_))))
 		{
 			return false;
 		}
-
-		//UINT qualityLevels[1];
-		//device_->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, 4, qualityLevels);
-		
 
 		DXGI_SWAP_CHAIN_DESC swap_chain_desc;
 		ZeroMemory(&swap_chain_desc, sizeof(swap_chain_desc));
@@ -74,8 +66,8 @@ namespace Graphics
 		swap_chain_desc.BufferCount = 1;
 
 		swap_chain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		swap_chain_desc.BufferDesc.Width = width;
-		swap_chain_desc.BufferDesc.Height = height;
+		swap_chain_desc.BufferDesc.Width = static_cast<UINT>(width);
+		swap_chain_desc.BufferDesc.Height = static_cast<UINT>(height);
 		swap_chain_desc.OutputWindow = windowHandle;
 		swap_chain_desc.Windowed = true;
 
@@ -95,8 +87,8 @@ namespace Graphics
 		
 		D3D11_TEXTURE2D_DESC depthStencilTextureDesc;
 		ZeroMemory(&depthStencilTextureDesc, sizeof(depthStencilTextureDesc));
-		depthStencilTextureDesc.Width = width;
-		depthStencilTextureDesc.Height = height;
+		depthStencilTextureDesc.Width = static_cast<UINT>(width);
+		depthStencilTextureDesc.Height = static_cast<UINT>(height);
 		depthStencilTextureDesc.MipLevels = 1;
 		depthStencilTextureDesc.ArraySize = 1;
 		depthStencilTextureDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -130,6 +122,7 @@ namespace Graphics
 		depthStencilDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
 		depthStencilDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
 
+		ID3D11DepthStencilState* depthStencilState_;
 		device_->CreateDepthStencilState(&depthStencilDesc, &depthStencilState_);
 		context_->OMSetDepthStencilState(depthStencilState_, 1);
 
@@ -159,6 +152,9 @@ namespace Graphics
 
 		context_->RSSetViewports(1, &viewport);
 
+
+		ID3DBlob* vertex_shader_blob{};
+		ID3DBlob* pixel_shader_blob{};
 		//set up shaders
 		vertex_shader_blob = load_shader_blob(L"TexturedVertexShaderDx11.cso");
 		pixel_shader_blob = load_shader_blob(L"TexturedPixelShaderDx11.cso");
@@ -171,7 +167,7 @@ namespace Graphics
 
 		//set up input layout
 		ID3D11InputLayout* input_layout;
-		D3D11_INPUT_ELEMENT_DESC input_desc[] =
+		const D3D11_INPUT_ELEMENT_DESC input_desc[] =
 		{
 			{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
 			{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
@@ -207,6 +203,7 @@ namespace Graphics
 		samplerDesc.MinLOD = 0;
 		samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
+		ID3D11SamplerState* m_sampleState;
 		// Create the texture sampler state.
 		device_->CreateSamplerState(&samplerDesc, &m_sampleState);
 		context_->PSSetSamplers(0, 1, &m_sampleState);
@@ -247,7 +244,7 @@ namespace Graphics
 		D3D11_BUFFER_DESC buffer_desc;
 		ZeroMemory(&buffer_desc, sizeof(buffer_desc));
 		buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-		buffer_desc.ByteWidth = sizeof(Vertex) * vertices.size();
+		buffer_desc.ByteWidth = static_cast<UINT>(sizeof(Vertex) * vertices.size());
 		buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 		buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
@@ -262,14 +259,14 @@ namespace Graphics
 		D3D11_BUFFER_DESC index_buffer_desc;
 		ZeroMemory(&index_buffer_desc, sizeof(index_buffer_desc));
 		index_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-		index_buffer_desc.ByteWidth = sizeof(indices[0]) * indices.size();
+		index_buffer_desc.ByteWidth = static_cast<UINT>(sizeof(indices[0]) * indices.size());
 		index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 		index_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
 		device_->CreateBuffer(&index_buffer_desc, &index_buffer_sub_resource, buffer);
 	}
 
-	void DX11Renderer::createTexture(ID3D11Texture2D** texture, ID3D11ShaderResourceView** texture_view, const Image& const material)
+	void DX11Renderer::createTexture(ID3D11Texture2D** texture, ID3D11ShaderResourceView** texture_view, const Image& material)
 	{
 		if (texture_pool_.count(material.Id))
 		{
@@ -280,8 +277,8 @@ namespace Graphics
 
 		D3D11_TEXTURE2D_DESC texDesc;
 		//if i forget this i am a horrible, horrible little gremlin.
-		texDesc.Height = material.Height;
-		texDesc.Width = material.Width;
+		texDesc.Height = static_cast<UINT>(material.Height);
+		texDesc.Width = static_cast<UINT>(material.Width);
 		texDesc.MipLevels = 0;
 		texDesc.ArraySize = 1;
 		texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -292,10 +289,10 @@ namespace Graphics
 		texDesc.CPUAccessFlags = 0;
 		texDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
-		auto hr = device_->CreateTexture2D(&texDesc, NULL, texture);
+		const auto hr = device_->CreateTexture2D(&texDesc, NULL, texture);
 		if (hr != S_OK) throw std::exception{};
 
-		auto rowPitch = (material.Width * 4) * sizeof(unsigned char);
+		const auto rowPitch = (material.Width * 4) * sizeof(unsigned char);
 		context_->UpdateSubresource(*texture, 0, NULL, material.Data, rowPitch, 0);
 		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
 		srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;

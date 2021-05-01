@@ -9,6 +9,11 @@ namespace PAL
 	class InputManager
 	{
 	public:
+		InputManager() noexcept
+		{
+			init();
+		};
+
 		using Pressable = int;
 		enum Button
 		{
@@ -19,35 +24,33 @@ namespace PAL
 		using Action = std::function<void()>;
 		using Axis = std::function<void(float)>;
 		
-		void init();
+		
 		void registerAction(Pressable button, const Action&& action);
 		void registerAxis(Button button, const Axis&& axis);
 		void process(const MSG& msg);
-		void update();
 
 	private:
+		void init() noexcept;
+
 		std::unordered_map<Pressable, Action> action_map_{};
 		std::unordered_map<Button, Axis> axis_map_{};
-
-		int supress_count_{};
-		float prev_delta_{};
 	};
 }
 
 
-void PAL::InputManager::init()
+void PAL::InputManager::init() noexcept
 {
 	RAWINPUTDEVICE rids[2];
 
 	rids[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
 	rids[0].usUsage = HID_USAGE_GENERIC_MOUSE;
 	rids[0].dwFlags = RIDEV_NOLEGACY;
-	rids[0].hwndTarget = 0;
+	rids[0].hwndTarget = nullptr;
 
 	rids[1].usUsagePage = HID_USAGE_PAGE_GENERIC;
 	rids[1].usUsage = HID_USAGE_GENERIC_KEYBOARD;
 	rids[1].dwFlags = RIDEV_NOLEGACY;
-	rids[1].hwndTarget = 0;
+	rids[1].hwndTarget = nullptr;
 
 	RegisterRawInputDevices(rids, 2, sizeof(rids[0]));
 }
@@ -56,10 +59,10 @@ void PAL::InputManager::process(const MSG& msg)
 {
 	if (msg.message == WM_INPUT)
 	{
-		RAWINPUT raw;
+		RAWINPUT raw{};
 		UINT size = sizeof(raw);
 
-		GetRawInputData((HRAWINPUT)msg.lParam, RID_INPUT, &raw, &size, sizeof(RAWINPUTHEADER));
+		GetRawInputData(reinterpret_cast<HRAWINPUT>(msg.lParam), RID_INPUT, &raw, &size, sizeof(RAWINPUTHEADER));
 
 		if (raw.header.dwType == RIM_TYPEKEYBOARD && action_map_.contains(raw.data.keyboard.VKey))
 		{
@@ -68,8 +71,8 @@ void PAL::InputManager::process(const MSG& msg)
 		
 		if (raw.header.dwType == RIM_TYPEMOUSE)
 		{
-			axis_map_[Button::VerticalLook](raw.data.mouse.lLastY);
-			axis_map_[Button::HorizontalLook](raw.data.mouse.lLastX);
+			axis_map_[Button::VerticalLook](static_cast<float>(raw.data.mouse.lLastY));
+			axis_map_[Button::HorizontalLook](static_cast<float>(raw.data.mouse.lLastX));
 		}
 	}
 }
@@ -102,21 +105,19 @@ namespace Graphics
 		window.lpszClassName = title.c_str();
 
 		RegisterClassEx(&window);
-		window_handle_ = CreateWindow(title.c_str(), title.c_str(), WS_BORDER, 0, 0, width, height, nullptr, nullptr, instance_, nullptr);
+		window_handle_ = CreateWindow(title.c_str(), title.c_str(), WS_BORDER, 0, 0, static_cast<int>(width), static_cast<int>(height), nullptr, nullptr, instance_, nullptr);
 
 		ShowWindow(window_handle_, SW_SHOW);
 		UpdateWindow(window_handle_);
 		renderer_->CreateContext(height, width, window_handle_);
 
 		ShowCursor(false);
-
 	}
 
-	LRESULT Window::WndProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam)
+	LRESULT Window::WndProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam) noexcept
 	{
-		switch (message)
-		{
-		case WM_DESTROY:
+		if (message == WM_DESTROY)
+		{ 
 			PostQuitMessage(0);
 			return 0;
 		}
@@ -138,10 +139,8 @@ namespace Graphics
 	void Window::Loop() {
 		MSG msg;
 		ZeroMemory(&msg, sizeof(msg));
-		//set up input manager
-		input_manager_->init();
 
-		input_manager_->registerAction(VK_ESCAPE, [&]() 
+		input_manager_->registerAction(VK_ESCAPE, [&]() noexcept
 			{
 				std::quick_exit(0);
 			});
@@ -157,13 +156,13 @@ namespace Graphics
 				camera_.moveForward();
 				renderer_->MoveCamera(camera_);
 			});
-		
+
 		input_manager_->registerAction('A', [&]()
 			{
 				camera_.moveLeft();
 				renderer_->MoveCamera(camera_);
 			});
-		
+
 		input_manager_->registerAction('D', [&]()
 			{
 				camera_.moveRight();
@@ -175,13 +174,12 @@ namespace Graphics
 				camera_.rotatePitch(delta);
 				renderer_->MoveCamera(camera_);
 			});
-		
+
 		input_manager_->registerAxis(PAL::InputManager::HorizontalLook, [&](float delta)
 			{
 				camera_.rotateYaw(delta);
 				renderer_->MoveCamera(camera_);
 			});
-
 
 		while (msg.message != WM_QUIT)
 		{
@@ -196,9 +194,9 @@ namespace Graphics
 		}
 	}
 
-	void Window::Update(Models const& current_scene_models, UpdateFunc const&& updateFunc)
+	void Window::SetScene(Models const& current_scene_models, UpdateFunc const&& updateFunc)
 	{
-		update_func_ = std::move(updateFunc);
+		update_func_ = updateFunc;
 		renderer_->SetModelsToRender(current_scene_models);
 	}
 }

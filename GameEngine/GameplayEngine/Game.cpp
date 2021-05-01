@@ -8,11 +8,6 @@ namespace Gameplay
 	{
 	}
 
-
-	Game::~Game()
-	{
-	}
-
 	void Game::SetTitle(std::string title)
 	{
 		_windowTitle = title;
@@ -30,7 +25,7 @@ namespace Gameplay
 
 	void Game::Run()
 	{
-		_window.Update(_curScene->getModels(),
+		_window.SetScene(_curScene->getModels(),
 			[=] {
 				auto currentTime = _clock.now();
 				auto deltaTime = static_cast<GameTimeDelta>(currentTime - _lastUpdateTime);

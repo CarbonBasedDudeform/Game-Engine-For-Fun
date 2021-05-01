@@ -12,7 +12,12 @@
 #include "FreeRoamProjectionCamera.h"
 #include "Model.h"
 
+#define PLATFORM_WINDOWS true
+
+#ifdef  PLATFORM_WINDOWS
 #define MAIN int CALLBACK WinMain(__in  HINSTANCE hInstance,__in  HINSTANCE hPrevInstance,__in  LPSTR lpCmdLine,__in  int nCmdShow)
+#endif //  PLATFORM_WINDOWS
+
 
 namespace PAL
 {
@@ -27,13 +32,12 @@ namespace Graphics
 		Window() = default;
 		Window(std::string& title, size_t height, size_t width, RendererTypes renderType);
 
-		void Update(Models const& current_scene_models, UpdateFunc const&& updateFunc);
+		void SetScene(Models const& current_scene_models, UpdateFunc const&& updateFunc);
 		void Loop();
 
 	private:
 		void Create(std::string const& title, size_t height, size_t width);
-		static LRESULT WINAPI WndProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
-		void recenter_cursor();
+		static LRESULT WINAPI WndProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam) noexcept;
 		
 	private:
 		HINSTANCE instance_{};

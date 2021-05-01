@@ -34,7 +34,6 @@ namespace Graphics
 			materials_[material.name] = std::move(texture);
 		}
 
-		int count = 0;
 		for (auto& shape : shapes)
 		{
 			auto index_offset = 0;
@@ -51,7 +50,7 @@ namespace Graphics
 		
 				for (int v = 0; v < fv; v++)
 				{
-					auto idx = shape.mesh.indices[index_offset + v];
+					const auto& idx = shape.mesh.indices[index_offset + v];
 					bool const texture_coords_exist = idx.texcoord_index != -1;
 					texture_verts_bucket[material_name].push_back(Vertex{ attribute.vertices[3*idx.vertex_index + 0], 
 													attribute.vertices[3*idx.vertex_index + 1], 

@@ -8,12 +8,11 @@
 namespace Gameplay
 {
 
-
 	class Game
 	{
 	public:
 		Game();
-		~Game();
+		
 		void SetTitle(std::string title);
 		const std::string& GetTitle() const;
 		void Initialise(std::string& title, size_t width, size_t height);
