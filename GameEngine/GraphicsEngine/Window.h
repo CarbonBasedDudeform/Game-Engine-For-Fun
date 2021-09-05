@@ -30,13 +30,13 @@ namespace Graphics
 	{
 	public:
 		Window() = default;
-		Window(std::string& title, size_t height, size_t width, RendererTypes renderType);
+		Window(const std::string& title, size_t height, size_t width, RendererTypes renderType);
 
 		void SetScene(Models const& current_scene_models, UpdateFunc const&& updateFunc);
 		void Loop();
 
 	private:
-		void Create(std::string const& title, size_t height, size_t width);
+		void Create(const std::string& title, size_t height, size_t width);
 		static LRESULT WINAPI WndProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam) noexcept;
 		
 	private:

@@ -22,6 +22,12 @@ struct Renderable {
 
 using Renderables = std::map<int, Renderable>; //<id, target>
 
+struct TextureStore
+{
+	ID3D11Texture2D* texture;
+	ID3D11ShaderResourceView* view;
+};
+
 namespace Graphics
 {
 	class DX11Renderer final : public IRenderer 
@@ -37,20 +43,8 @@ namespace Graphics
 		virtual void PostFrameRenderBehaviour() final;
 		virtual void SetModelsToRender(Models const& models) final;
 		void MoveCamera(const ICamera& camera) final;
-
-	private:
-		void createVertexBuffer(ID3D11Buffer** buffer, const std::vector<Vertex>& vertices);
-		void createIndicesBuffer(ID3D11Buffer** buffer, const std::vector<unsigned int>& indices);
-		void createTexture(ID3D11Texture2D** texture, ID3D11ShaderResourceView** texture_view, const Image& material);
-		void createConstantBuffer(ID3D11Buffer** constant_buffer);
 		
 	private:
-		struct TextureStore
-		{
-			ID3D11Texture2D* texture;
-			ID3D11ShaderResourceView* view;
-		};
-
 		Renderables renderables_;
 		Microsoft::WRL::ComPtr<IDXGISwapChain> swap_chain_{};
 

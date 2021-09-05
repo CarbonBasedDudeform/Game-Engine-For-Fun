@@ -125,7 +125,7 @@ namespace Graphics
 		return DefWindowProc(windowHandle, message, wParam, lParam);
 	}
 
-	Window::Window(std::string& title, size_t height, size_t width, RendererTypes renderType)
+	Window::Window(const std::string& title, size_t height, size_t width, RendererTypes renderType)
 		: input_manager_(std::make_shared<PAL::InputManager>())
 	{
 		switch (renderType)

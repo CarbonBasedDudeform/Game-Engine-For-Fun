@@ -18,7 +18,7 @@ namespace Gameplay
 		return _windowTitle;
 	}
 
-	void Game::Initialise(std::string& title, size_t width, size_t height)
+	void Game::Initialise(const std::string& title, size_t width, size_t height)
 	{
 		_window = Graphics::Window(title, width, height, Graphics::RendererTypes::DX11);
 	}

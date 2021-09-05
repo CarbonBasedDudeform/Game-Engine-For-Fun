@@ -15,7 +15,7 @@ namespace Gameplay
 		
 		void SetTitle(std::string title);
 		const std::string& GetTitle() const;
-		void Initialise(std::string& title, size_t width, size_t height);
+		void Initialise(const std::string& title, size_t width, size_t height);
 		void Run();
 		void SetScene(std::shared_ptr<Gameplay::Scene>& scene);
 	private:

@@ -88,3 +88,4 @@ GameEngine/GameplayEngine/x64/Debug/game.nativecodeanalysis.xml
 *.FileListAbsolute.txt
 *.recipe
 CodeAnalysisResultManifest.txt
+*.ilk

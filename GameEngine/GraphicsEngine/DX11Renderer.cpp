@@ -6,30 +6,124 @@
 #include <DirectXMath.h>
 #pragma warning(pop) //enable warnings again
 
-
 namespace Graphics
 {
-	ID3DBlob * load_shader_blob(std::filesystem::path const& path_to_cso)
+	namespace Structures
 	{
-		ID3DBlob* shader_blob{ };
-		auto const the_path = std::filesystem::current_path() / path_to_cso;
-		D3DReadFileToBlob(the_path.c_str(), &shader_blob);
-		if (!shader_blob)
+		struct StandardTextureDesc
 		{
-			auto err_msg = std::wstring{ L"Failed to load shader: " };
-			err_msg += path_to_cso.wstring();
-			err_msg += L"\n";
-			OutputDebugStringW(err_msg.c_str());
-		}
-		else
+			StandardTextureDesc(const int Height, const int Width)
+			{
+				texDesc.Height = static_cast<UINT>(Height);
+				texDesc.Width = static_cast<UINT>(Width);
+				texDesc.MipLevels = 0;
+				texDesc.ArraySize = 1;
+				texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				texDesc.SampleDesc.Count = 1;
+				texDesc.SampleDesc.Quality = 0;
+				texDesc.Usage = D3D11_USAGE_DEFAULT;
+				texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+				texDesc.CPUAccessFlags = 0;
+				texDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+			};
+
+			D3D11_TEXTURE2D_DESC texDesc;
+		};
+
+		struct StandardShaderResource
 		{
-			auto err_msg = std::wstring{ L"Successfully loaded shader: " };
-			err_msg += path_to_cso.wstring();
-			err_msg += L"\n";
-			OutputDebugStringW(err_msg.c_str());
+			StandardShaderResource()
+			{
+				srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+				srvDesc.Texture2D.MostDetailedMip = 0;
+				srvDesc.Texture2D.MipLevels = 1;
+			};
+
+			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+		};
+		
+	}
+
+	namespace General
+	{
+		void CreateVertexBuffer(ID3D11Device* device, ID3D11Buffer** buffer, const std::vector<Vertex>& vertices)
+		{
+			D3D11_SUBRESOURCE_DATA vertex_buffer_sub_resource;
+			vertex_buffer_sub_resource.pSysMem = vertices.data();
+
+			D3D11_BUFFER_DESC buffer_desc;
+			ZeroMemory(&buffer_desc, sizeof(buffer_desc));
+			buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+			buffer_desc.ByteWidth = static_cast<UINT>(sizeof(Vertex) * vertices.size());
+			buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+			buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+			device->CreateBuffer(&buffer_desc, &vertex_buffer_sub_resource, buffer);
 		}
 
-		return shader_blob;
+
+		void CreateIndicesBuffer(ID3D11Device* device, ID3D11Buffer** buffer, const std::vector<unsigned int>& indices)
+		{
+			D3D11_SUBRESOURCE_DATA index_buffer_sub_resource;
+			index_buffer_sub_resource.pSysMem = indices.data();
+
+			D3D11_BUFFER_DESC index_buffer_desc;
+			ZeroMemory(&index_buffer_desc, sizeof(index_buffer_desc));
+			index_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+			index_buffer_desc.ByteWidth = static_cast<UINT>(sizeof(indices[0]) * indices.size());
+			index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+			index_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+			device->CreateBuffer(&index_buffer_desc, &index_buffer_sub_resource, buffer);
+		}
+
+		void CreateConstantBuffer(ID3D11Device* device, ID3D11Buffer** constant_buffer)
+		{
+			D3D11_BUFFER_DESC cbd{ 0 };
+			cbd.ByteWidth = sizeof(ConstantBuffer);
+			cbd.Usage = D3D11_USAGE_DEFAULT;
+			cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+			device->CreateBuffer(&cbd, 0, constant_buffer);
+		}
+
+		void CreateTexture(std::map<int, TextureStore>& texture_pool, ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Texture2D** texture, ID3D11ShaderResourceView** texture_view, const Image& material)
+		{
+			const bool texture_already_created = texture_pool.count(material.Id);
+			if (texture_already_created)
+			{
+				*texture = texture_pool[material.Id].texture;
+				*texture_view = texture_pool[material.Id].view;
+				return;
+			}
+
+			const auto texDesc = Structures::StandardTextureDesc{ material.Height, material.Width };
+			if (device->CreateTexture2D(&texDesc.texDesc, nullptr, texture) != S_OK)
+			{
+				throw std::exception{ "Failed to create 2d texture" };
+			}
+
+			const auto rowPitch = (material.Width * 4) * sizeof(unsigned char);
+			context->UpdateSubresource(*texture, 0, NULL, material.Data, rowPitch, 0);
+
+			const auto srvDesc = Structures::StandardShaderResource{};
+			device->CreateShaderResourceView(*texture, &srvDesc.srvDesc, texture_view);
+			context->GenerateMips(*texture_view);
+
+			texture_pool[material.Id] = { *texture, *texture_view };
+		}
+
+		ID3DBlob* LoadShaderBlob(std::filesystem::path const& path_to_cso)
+		{
+			ID3DBlob* shader_blob{ };
+			auto const the_path = std::filesystem::current_path() / path_to_cso;
+			D3DReadFileToBlob(the_path.c_str(), &shader_blob);
+			const auto success_msg = std::format(L"{} shader: {}", !shader_blob ? L"Succesfulled loaded" : L"Failed to load", path_to_cso.wstring());
+			OutputDebugStringW(success_msg.c_str());
+
+			return shader_blob;
+		}
 	}
 
 	bool DX11Renderer::CreateContext(size_t height, size_t width, HWND windowHandle)
@@ -152,17 +246,12 @@ namespace Graphics
 
 		context_->RSSetViewports(1, &viewport);
 
-
-		ID3DBlob* vertex_shader_blob{};
-		ID3DBlob* pixel_shader_blob{};
-		//set up shaders
-		vertex_shader_blob = load_shader_blob(L"TexturedVertexShaderDx11.cso");
-		pixel_shader_blob = load_shader_blob(L"TexturedPixelShaderDx11.cso");
-		
+		ID3DBlob* vertex_shader_blob = General::LoadShaderBlob(L"TexturedVertexShaderDx11.cso");
 		device_->CreateVertexShader(vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), nullptr, &vertex_shader_);
-		device_->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), nullptr, &pixel_shader_);
-
 		context_->VSSetShader(vertex_shader_, nullptr, 0);
+
+		ID3DBlob* pixel_shader_blob = General::LoadShaderBlob(L"TexturedPixelShaderDx11.cso");	
+		device_->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), nullptr, &pixel_shader_);
 		context_->PSSetShader(pixel_shader_, nullptr, 0);
 
 		//set up input layout
@@ -230,90 +319,10 @@ namespace Graphics
 
 	void DX11Renderer::MoveCamera(const ICamera& camera)
 	{
-		DirectX::XMVECTOR eye = camera.getEye();
-		DirectX::XMVECTOR lookAt = camera.getLookAt();
-		DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+		const auto eye = camera.getEye();
+		const auto lookAt = camera.getLookAt();
+		const auto up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 		view = DirectX::XMMatrixLookAtLH(eye, lookAt, up);
-	}
-
-	void DX11Renderer::createVertexBuffer(ID3D11Buffer** buffer, const std::vector<Vertex>& vertices)
-	{
-		D3D11_SUBRESOURCE_DATA vertex_buffer_sub_resource;
-		vertex_buffer_sub_resource.pSysMem = vertices.data();
-
-		D3D11_BUFFER_DESC buffer_desc;
-		ZeroMemory(&buffer_desc, sizeof(buffer_desc));
-		buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-		buffer_desc.ByteWidth = static_cast<UINT>(sizeof(Vertex) * vertices.size());
-		buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-		device_->CreateBuffer(&buffer_desc, &vertex_buffer_sub_resource, buffer);
-	}
-
-	void DX11Renderer::createIndicesBuffer(ID3D11Buffer** buffer, const std::vector<unsigned int>& indices)
-	{
-		D3D11_SUBRESOURCE_DATA index_buffer_sub_resource;
-		index_buffer_sub_resource.pSysMem = indices.data();
-
-		D3D11_BUFFER_DESC index_buffer_desc;
-		ZeroMemory(&index_buffer_desc, sizeof(index_buffer_desc));
-		index_buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-		index_buffer_desc.ByteWidth = static_cast<UINT>(sizeof(indices[0]) * indices.size());
-		index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		index_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-
-		device_->CreateBuffer(&index_buffer_desc, &index_buffer_sub_resource, buffer);
-	}
-
-	void DX11Renderer::createTexture(ID3D11Texture2D** texture, ID3D11ShaderResourceView** texture_view, const Image& material)
-	{
-		if (texture_pool_.count(material.Id))
-		{
-			*texture = texture_pool_[material.Id].texture;
-			*texture_view = texture_pool_[material.Id].view;
-			return;
-		}
-
-		D3D11_TEXTURE2D_DESC texDesc;
-		//if i forget this i am a horrible, horrible little gremlin.
-		texDesc.Height = static_cast<UINT>(material.Height);
-		texDesc.Width = static_cast<UINT>(material.Width);
-		texDesc.MipLevels = 0;
-		texDesc.ArraySize = 1;
-		texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		texDesc.SampleDesc.Count = 1;
-		texDesc.SampleDesc.Quality = 0;
-		texDesc.Usage = D3D11_USAGE_DEFAULT;
-		texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-		texDesc.CPUAccessFlags = 0;
-		texDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
-
-		const auto hr = device_->CreateTexture2D(&texDesc, NULL, texture);
-		if (hr != S_OK) throw std::exception{};
-
-		const auto rowPitch = (material.Width * 4) * sizeof(unsigned char);
-		context_->UpdateSubresource(*texture, 0, NULL, material.Data, rowPitch, 0);
-		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-		srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-		srvDesc.Texture2D.MostDetailedMip = 0;
-		srvDesc.Texture2D.MipLevels = 1;
-
-		device_->CreateShaderResourceView(*texture, &srvDesc, texture_view);
-		context_->GenerateMips(*texture_view);
-
-		texture_pool_[material.Id] = { *texture, *texture_view };
-	}
-
-	void DX11Renderer::createConstantBuffer(ID3D11Buffer** constant_buffer)
-	{
-		D3D11_BUFFER_DESC cbd{ 0 };
-		cbd.ByteWidth = sizeof(ConstantBuffer);
-		cbd.Usage = D3D11_USAGE_DEFAULT;
-		cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-
-		device_->CreateBuffer(&cbd, 0, constant_buffer);
 	}
 
 	void DX11Renderer::Render()
@@ -335,33 +344,27 @@ namespace Graphics
 			for (std::string material_name  : materials)
 			{
 				const auto& texture = model.getImage(material_name);
-				
 				auto& to_render = renderables_[texture->Id];
 
 				if (to_render.vertices.empty())
 				{
-						to_render.vertices = model.texture_verts_bucket[material_name];
-										
+					to_render.vertices = model.texture_verts_bucket[material_name];						
 				}
-				if (!to_render.texture && texture  && texture->Data)
+
+				if (!to_render.texture && texture && texture->Data)
 				{
-					createTexture(&to_render.texture, &to_render.texture_view, *texture);
+					General::CreateTexture(texture_pool_, device_, context_, &to_render.texture, &to_render.texture_view, *texture);
 				}
 
 				if (!to_render.vertices_buffer)
 				{
-					createVertexBuffer(&to_render.vertices_buffer, to_render.vertices);
+					General::CreateVertexBuffer(device_, &to_render.vertices_buffer, to_render.vertices);
 					to_render.index_count = to_render.vertices.size();
 				}
 				
-				//if (!to_render.index_buffer)
-				//{
-				//	createIndicesBuffer(&to_render.index_buffer, to_render.idxs);
-				//}
-
 				if (!to_render.constant_buffer)
 				{
-					createConstantBuffer(&to_render.constant_buffer);
+					General::CreateConstantBuffer(device_, &to_render.constant_buffer);
 				}
 
 				auto const stride = UINT{ sizeof(Vertex) };
@@ -369,8 +372,7 @@ namespace Graphics
 				
 				context_->IASetVertexBuffers(0, 1, &to_render.vertices_buffer, &stride, &offset);
 				context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-				//context_->IASetIndexBuffer(to_render.index_buffer, DXGI_FORMAT_R32_UINT, 0);
-
+				
 				model.constant_buffer.world = DirectX::XMMatrixTranspose(world);
 				model.constant_buffer.view = DirectX::XMMatrixTranspose(view);
 				model.constant_buffer.projection = DirectX::XMMatrixTranspose(projection);
@@ -378,7 +380,10 @@ namespace Graphics
 				
 				context_->VSSetConstantBuffers(0, 1, &to_render.constant_buffer);
 				
-				if (to_render.texture_view) context_->PSSetShaderResources(0, 1, &to_render.texture_view);
+				if (to_render.texture_view)
+				{
+					context_->PSSetShaderResources(0, 1, &to_render.texture_view);
+				}
 
 				context_->Draw(to_render.index_count, 0);
 			}
