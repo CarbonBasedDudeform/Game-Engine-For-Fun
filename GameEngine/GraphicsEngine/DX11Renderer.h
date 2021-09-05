@@ -36,6 +36,10 @@ namespace Graphics
 		DX11Renderer() = default;
 
 		virtual bool CreateContext(size_t height, size_t width, HWND windowHandle) final;
+		void CreateVertexShader();
+		void CreateViewport(const size_t& width, const size_t& height);
+		void CreateDepthStencil(const size_t& height, const size_t& width);
+		void CreateBackBuffer();
 		virtual void Render() final;
 
 	protected:
@@ -43,6 +47,10 @@ namespace Graphics
 		virtual void PostFrameRenderBehaviour() final;
 		virtual void SetModelsToRender(Models const& models) final;
 		void MoveCamera(const ICamera& camera) final;
+	private:
+		void InitialiseWorldViewProjection(size_t Height, size_t Width);
+		void CreateDevice();
+		void CreateSwapChain(size_t Height, size_t Width, HWND WindowHandle);
 		
 	private:
 		Renderables renderables_;

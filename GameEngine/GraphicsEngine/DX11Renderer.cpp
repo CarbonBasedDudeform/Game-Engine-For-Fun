@@ -43,8 +43,110 @@ namespace Graphics
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
 		};
 		
-	}
+		D3D_FEATURE_LEVEL static const FeatureLevels[] = {
+			D3D_FEATURE_LEVEL_11_0,
+			D3D_FEATURE_LEVEL_10_1,
+			D3D_FEATURE_LEVEL_10_0
+		};
 
+		struct StandardSwapChain
+		{
+			StandardSwapChain(size_t Height, size_t Width, HWND WindowHandle)
+			{
+
+				ZeroMemory(&swap_chain_desc, sizeof(swap_chain_desc));
+				swap_chain_desc.SampleDesc.Count = 1;
+				//swapChainDesc.SampleDesc.Quality = 0;// qualityLevels[0];
+				swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+				swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+				swap_chain_desc.BufferCount = 1;
+
+				swap_chain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				swap_chain_desc.BufferDesc.Width = static_cast<UINT>(Width);
+				swap_chain_desc.BufferDesc.Height = static_cast<UINT>(Height);
+				swap_chain_desc.OutputWindow = WindowHandle;
+				swap_chain_desc.Windowed = true;
+			};
+
+			DXGI_SWAP_CHAIN_DESC swap_chain_desc;
+		};
+
+		struct StandardFullscreenDesc
+		{
+			StandardFullscreenDesc()
+			{
+				ZeroMemory(&fullScreenDesc, sizeof(fullScreenDesc));
+				fullScreenDesc.RefreshRate.Numerator = 60;
+				fullScreenDesc.RefreshRate.Denominator = 1;
+				fullScreenDesc.Windowed = false;
+			};
+
+			DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullScreenDesc;
+		};
+
+		struct StandardDepthStencilTexture
+		{
+			StandardDepthStencilTexture(size_t Height, size_t Width)
+			{
+				ZeroMemory(&depthStencilTextureDesc, sizeof(depthStencilTextureDesc));
+				depthStencilTextureDesc.Width = static_cast<UINT>(Width);
+				depthStencilTextureDesc.Height = static_cast<UINT>(Height);
+				depthStencilTextureDesc.MipLevels = 1;
+				depthStencilTextureDesc.ArraySize = 1;
+				depthStencilTextureDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+				depthStencilTextureDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+				depthStencilTextureDesc.Usage = D3D11_USAGE_DEFAULT;
+				depthStencilTextureDesc.SampleDesc.Count = 1;
+				depthStencilTextureDesc.SampleDesc.Quality = 0;
+				depthStencilTextureDesc.CPUAccessFlags = 0;
+				depthStencilTextureDesc.MiscFlags = 0;
+			};
+
+			D3D11_TEXTURE2D_DESC depthStencilTextureDesc;
+		};
+
+		struct StandardDepthStencil
+		{
+			StandardDepthStencil()
+			{
+				ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
+
+				depthStencilDesc.DepthEnable = true;
+				depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+				depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
+
+				depthStencilDesc.StencilEnable = true;
+				depthStencilDesc.StencilReadMask = 0xFF;
+				depthStencilDesc.StencilWriteMask = 0xFF;
+
+				depthStencilDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+				depthStencilDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
+				depthStencilDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+				depthStencilDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+
+				depthStencilDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+				depthStencilDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
+				depthStencilDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+			};
+
+			D3D11_DEPTH_STENCIL_DESC depthStencilDesc;
+		};
+
+		struct StandardDepthStencilView
+		{
+			StandardDepthStencilView()
+			{
+				ZeroMemory(&depthStencilViewDesc, sizeof(depthStencilViewDesc));
+
+				// Set up the depth stencil view description.
+				depthStencilViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+				depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+				depthStencilViewDesc.Texture2D.MipSlice = 0;
+			};
+
+			D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
+		};
+	}
 	namespace General
 	{
 		void CreateVertexBuffer(ID3D11Device* device, ID3D11Buffer** buffer, const std::vector<Vertex>& vertices)
@@ -124,159 +226,33 @@ namespace Graphics
 
 			return shader_blob;
 		}
+
+		DirectX::XMMATRIX MakeViewMatrix()
+		{
+			const auto eye = DirectX::XMVectorSet(0.0f, 5.0f, 0.0f, 0.0f);
+			const auto lookAt = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+			const auto up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+			return DirectX::XMMatrixLookAtLH(eye, lookAt, up);
+		}
 	}
 
 	bool DX11Renderer::CreateContext(size_t height, size_t width, HWND windowHandle)
+	{		
+		InitialiseWorldViewProjection(height, width);
+		CreateDevice();
+		CreateSwapChain(height, width, windowHandle);
+		CreateBackBuffer();
+		CreateDepthStencil(height, width);
+		CreateViewport(width, height);
+		CreateVertexShader();
+		CreatePixelShader();
+		CreateSamplerState();
+
+		return true;
+	}
+
+	void DX11Renderer::CreateSamplerState()
 	{
-		D3D_FEATURE_LEVEL  const featureLevels[] = {
-			D3D_FEATURE_LEVEL_11_0,
-			D3D_FEATURE_LEVEL_10_1,
-			D3D_FEATURE_LEVEL_10_0
-		};
-		
-		world = DirectX::XMMatrixIdentity();
-		projection = DirectX::XMMatrixPerspectiveFovLH(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
-		
-		const DirectX::XMVECTOR eye = DirectX::XMVectorSet(0.0f, 5.0f, 0.0f, 0.0f);
-		const DirectX::XMVECTOR lookAt = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-		const DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-		view = DirectX::XMMatrixLookAtLH(eye, lookAt, up);
-
-		D3D_FEATURE_LEVEL selectedFeatureLevel{};
-
-		UINT constexpr createDeviceFlags = 0;
-		HRESULT hr;
-		if (FAILED((hr = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, featureLevels, ARRAYSIZE(featureLevels), D3D11_SDK_VERSION, &device_, &selectedFeatureLevel, &context_))))
-		{
-			return false;
-		}
-
-		DXGI_SWAP_CHAIN_DESC swap_chain_desc;
-		ZeroMemory(&swap_chain_desc, sizeof(swap_chain_desc));
-		swap_chain_desc.SampleDesc.Count = 1;
-		//swapChainDesc.SampleDesc.Quality = 0;// qualityLevels[0];
-		swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-		swap_chain_desc.BufferCount = 1;
-
-		swap_chain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		swap_chain_desc.BufferDesc.Width = static_cast<UINT>(width);
-		swap_chain_desc.BufferDesc.Height = static_cast<UINT>(height);
-		swap_chain_desc.OutputWindow = windowHandle;
-		swap_chain_desc.Windowed = true;
-
-
-		DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullScreenDesc;
-		ZeroMemory(&fullScreenDesc, sizeof(fullScreenDesc));
-		fullScreenDesc.RefreshRate.Numerator = 60;
-		fullScreenDesc.RefreshRate.Denominator = 1;
-		fullScreenDesc.Windowed = false;
-
-		D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, NULL, NULL, NULL, NULL, D3D11_SDK_VERSION, &swap_chain_desc, &swap_chain_, &device_, NULL, &context_);
-		
-		swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back_buffer_));
-		
-		device_->CreateRenderTargetView(back_buffer_, nullptr, &render_target_);
-		back_buffer_->Release();
-		
-		D3D11_TEXTURE2D_DESC depthStencilTextureDesc;
-		ZeroMemory(&depthStencilTextureDesc, sizeof(depthStencilTextureDesc));
-		depthStencilTextureDesc.Width = static_cast<UINT>(width);
-		depthStencilTextureDesc.Height = static_cast<UINT>(height);
-		depthStencilTextureDesc.MipLevels = 1;
-		depthStencilTextureDesc.ArraySize = 1;
-		depthStencilTextureDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-		depthStencilTextureDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-		depthStencilTextureDesc.Usage = D3D11_USAGE_DEFAULT;
-		depthStencilTextureDesc.SampleDesc.Count = 1;
-		depthStencilTextureDesc.SampleDesc.Quality = 0;
-		depthStencilTextureDesc.CPUAccessFlags = 0;
-		depthStencilTextureDesc.MiscFlags = 0;
-		
-		device_->CreateTexture2D(&depthStencilTextureDesc, nullptr,&depth_stencil_buffer_);
-
-		
-		D3D11_DEPTH_STENCIL_DESC depthStencilDesc;
-		ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
-
-		depthStencilDesc.DepthEnable = true;
-		depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-		depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
-		
-		depthStencilDesc.StencilEnable = true;
-		depthStencilDesc.StencilReadMask = 0xFF;
-		depthStencilDesc.StencilWriteMask = 0xFF;
-		
-		depthStencilDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-		depthStencilDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
-		depthStencilDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-		depthStencilDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-		
-		depthStencilDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-		depthStencilDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
-		depthStencilDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-
-		ID3D11DepthStencilState* depthStencilState_;
-		device_->CreateDepthStencilState(&depthStencilDesc, &depthStencilState_);
-		context_->OMSetDepthStencilState(depthStencilState_, 1);
-
-		D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
-		ZeroMemory(&depthStencilViewDesc, sizeof(depthStencilViewDesc));
-
-		// Set up the depth stencil view description.
-		depthStencilViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-		
-		depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-		depthStencilViewDesc.Texture2D.MipSlice = 0;
-
-		device_->CreateDepthStencilView(depth_stencil_buffer_, &depthStencilViewDesc, &depth_stencil_view_);
-		
-		
-		context_->OMSetRenderTargets(1, &render_target_, depth_stencil_view_);
-
-		D3D11_VIEWPORT viewport;
-		ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));
-
-		viewport.TopLeftX = 0;
-		viewport.TopLeftY = 0;
-		viewport.Width = static_cast<float>(width);
-		viewport.Height = static_cast<float>(height);
-		viewport.MinDepth = 0.0f;
-		viewport.MaxDepth = 1.0f;
-
-		context_->RSSetViewports(1, &viewport);
-
-		ID3DBlob* vertex_shader_blob = General::LoadShaderBlob(L"TexturedVertexShaderDx11.cso");
-		device_->CreateVertexShader(vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), nullptr, &vertex_shader_);
-		context_->VSSetShader(vertex_shader_, nullptr, 0);
-
-		ID3DBlob* pixel_shader_blob = General::LoadShaderBlob(L"TexturedPixelShaderDx11.cso");	
-		device_->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), nullptr, &pixel_shader_);
-		context_->PSSetShader(pixel_shader_, nullptr, 0);
-
-		//set up input layout
-		ID3D11InputLayout* input_layout;
-		const D3D11_INPUT_ELEMENT_DESC input_desc[] =
-		{
-			{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-			{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-		};
-		 
-		device_->CreateInputLayout(input_desc, 2, vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout); // 3 = sizeof(input_desc) / sizeof(d3d11_input_element_desc) ?
-		context_->IASetInputLayout(input_layout);
-
-		//set raster state
-		//D3D11_RASTERIZER_DESC raster_desc;
-		//ZeroMemory(&raster_desc, sizeof(raster_desc));
-		//raster_desc.CullMode = D3D11_CULL_BACK;
-		////raster_desc.DepthClipEnable = true;
-		//raster_desc.FrontCounterClockwise = false;
-		//raster_desc.FillMode = D3D11_FILL_SOLID;
-		//
-		//ID3D11RasterizerState* raster_state;
-		//device_->CreateRasterizerState(&raster_desc, &raster_state);
-		//context_->RSSetState(raster_state);
-
 		D3D11_SAMPLER_DESC samplerDesc;
 		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -296,8 +272,71 @@ namespace Graphics
 		// Create the texture sampler state.
 		device_->CreateSamplerState(&samplerDesc, &m_sampleState);
 		context_->PSSetSamplers(0, 1, &m_sampleState);
-		
-		return true;
+
+	}
+
+	void DX11Renderer::CreatePixelShader()
+	{
+
+		ID3DBlob* pixel_shader_blob = General::LoadShaderBlob(L"TexturedPixelShaderDx11.cso");
+		device_->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), nullptr, &pixel_shader_);
+		context_->PSSetShader(pixel_shader_, nullptr, 0);
+	}
+
+	void DX11Renderer::CreateVertexShader()
+	{
+		ID3DBlob* vertex_shader_blob = General::LoadShaderBlob(L"TexturedVertexShaderDx11.cso");
+		device_->CreateVertexShader(vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), nullptr, &vertex_shader_);
+		context_->VSSetShader(vertex_shader_, nullptr, 0);
+
+		//set up input layout
+		ID3D11InputLayout* input_layout;
+		const D3D11_INPUT_ELEMENT_DESC input_desc[] =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+		};
+
+		device_->CreateInputLayout(input_desc, 2, vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout); // 3 = sizeof(input_desc) / sizeof(d3d11_input_element_desc) ?
+		context_->IASetInputLayout(input_layout);
+	}
+
+	void DX11Renderer::CreateViewport(const size_t& width, const size_t& height)
+	{
+		D3D11_VIEWPORT viewport;
+		ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));
+
+		viewport.TopLeftX = 0;
+		viewport.TopLeftY = 0;
+		viewport.Width = static_cast<float>(width);
+		viewport.Height = static_cast<float>(height);
+		viewport.MinDepth = 0.0f;
+		viewport.MaxDepth = 1.0f;
+
+		context_->RSSetViewports(1, &viewport);
+	}
+
+	void DX11Renderer::CreateDepthStencil(const size_t& Height, const size_t& Width)
+	{
+		const auto depthStencilTextureDesc = Structures::StandardDepthStencilTexture{ Height, Width };
+		device_->CreateTexture2D(&depthStencilTextureDesc.depthStencilTextureDesc, nullptr, &depth_stencil_buffer_);
+
+		const auto depthStencilDesc = Structures::StandardDepthStencil{};
+		ID3D11DepthStencilState* depthStencilState_;
+		device_->CreateDepthStencilState(&depthStencilDesc.depthStencilDesc, &depthStencilState_);
+		context_->OMSetDepthStencilState(depthStencilState_, 1);
+
+		const auto depthStencilViewDesc = Structures::StandardDepthStencilView{};
+		device_->CreateDepthStencilView(depth_stencil_buffer_, &depthStencilViewDesc.depthStencilViewDesc, &depth_stencil_view_);
+
+		context_->OMSetRenderTargets(1, &render_target_, depth_stencil_view_);
+	}
+
+	void DX11Renderer::CreateBackBuffer()
+	{
+		swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back_buffer_));
+		device_->CreateRenderTargetView(back_buffer_, nullptr, &render_target_);
+		back_buffer_->Release();
 	}
 
 	void DX11Renderer::PreFrameRenderBehaviour()
@@ -323,6 +362,27 @@ namespace Graphics
 		const auto lookAt = camera.getLookAt();
 		const auto up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 		view = DirectX::XMMatrixLookAtLH(eye, lookAt, up);
+	}
+
+	void DX11Renderer::InitialiseWorldViewProjection(size_t Height, size_t Width)
+	{
+		world = DirectX::XMMatrixIdentity();
+		projection = DirectX::XMMatrixPerspectiveFovLH(45.0f, (float)Width / (float)Height, 0.1f, 1000.0f);
+		view = General::MakeViewMatrix();
+	}
+
+	void DX11Renderer::CreateDevice()
+	{
+		D3D_FEATURE_LEVEL selectedFeatureLevel{};
+		UINT constexpr createDeviceFlags = 0;
+		D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, Structures::FeatureLevels, ARRAYSIZE(Structures::FeatureLevels), D3D11_SDK_VERSION, &device_, &selectedFeatureLevel, &context_);
+	}
+
+	void DX11Renderer::CreateSwapChain(size_t Height, size_t Width, HWND WindowHandle)
+	{
+		const auto swap_chain_desc = Structures::StandardSwapChain{ Height, Width, WindowHandle };
+		const auto fullscreenDesc = Structures::StandardFullscreenDesc();
+		D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, NULL, nullptr, NULL, D3D11_SDK_VERSION, &swap_chain_desc.swap_chain_desc, &swap_chain_, &device_, NULL, &context_);
 	}
 
 	void DX11Renderer::Render()
