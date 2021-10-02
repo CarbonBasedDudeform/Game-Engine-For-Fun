@@ -277,7 +277,6 @@ namespace Graphics
 
 	void DX11Renderer::CreatePixelShader()
 	{
-
 		ID3DBlob* pixel_shader_blob = General::LoadShaderBlob(L"TexturedPixelShaderDx11.cso");
 		device_->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), nullptr, &pixel_shader_);
 		context_->PSSetShader(pixel_shader_, nullptr, 0);

@@ -36,6 +36,8 @@ namespace Graphics
 		DX11Renderer() = default;
 
 		virtual bool CreateContext(size_t height, size_t width, HWND windowHandle) final;
+		void CreateSamplerState();
+		void CreatePixelShader();
 		void CreateVertexShader();
 		void CreateViewport(const size_t& width, const size_t& height);
 		void CreateDepthStencil(const size_t& height, const size_t& width);
