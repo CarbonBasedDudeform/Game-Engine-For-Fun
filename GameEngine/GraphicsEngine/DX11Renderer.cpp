@@ -4,6 +4,9 @@
 #include <filesystem>   
 #include <iostream> //todo: switch to some non-basic bitch logger
 #include <DirectXMath.h>
+
+#include "ImGui/Backends/imgui_impl_dx11.h"
+
 #pragma warning(pop) //enable warnings again
 
 namespace Graphics
@@ -248,6 +251,7 @@ namespace Graphics
 		CreatePixelShader();
 		CreateSamplerState();
 
+		ImGui_ImplDX11_Init(device_, context_);
 		return true;
 	}
 
@@ -448,6 +452,8 @@ namespace Graphics
 			}
 		}
 		
+
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 		PostFrameRenderBehaviour();
 	}
 }
