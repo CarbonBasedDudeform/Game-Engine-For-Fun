@@ -4,6 +4,9 @@
 #include <filesystem>   
 #include <iostream> //todo: switch to some non-basic bitch logger
 #include <DirectXMath.h>
+
+#include "ImGui/Backends/imgui_impl_dx11.h"
+
 #pragma warning(pop) //enable warnings again
 
 namespace Graphics
@@ -248,6 +251,7 @@ namespace Graphics
 		CreatePixelShader();
 		CreateSamplerState();
 
+		ImGui_ImplDX11_Init(device_, context_);
 		return true;
 	}
 
@@ -277,7 +281,6 @@ namespace Graphics
 
 	void DX11Renderer::CreatePixelShader()
 	{
-
 		ID3DBlob* pixel_shader_blob = General::LoadShaderBlob(L"TexturedPixelShaderDx11.cso");
 		device_->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), nullptr, &pixel_shader_);
 		context_->PSSetShader(pixel_shader_, nullptr, 0);
@@ -449,6 +452,8 @@ namespace Graphics
 			}
 		}
 		
+
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 		PostFrameRenderBehaviour();
 	}
 }

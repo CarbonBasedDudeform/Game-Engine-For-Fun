@@ -1,19 +1,19 @@
 
 #include "Window.h"
+#include "windowsx.h"
 #include "DX11Renderer.h"
 
 #include "hidusage.h"
+
+#include "ImGui/imgui.h"
+#include "ImGui/Backends/imgui_impl_win32.h"
+#include "ImGui/Backends/imgui_impl_dx11.h"
 
 namespace PAL
 {
 	class InputManager
 	{
 	public:
-		InputManager() noexcept
-		{
-			init();
-		};
-
 		using Pressable = int;
 		enum Button
 		{
@@ -30,50 +30,43 @@ namespace PAL
 		void process(const MSG& msg);
 
 	private:
-		void init() noexcept;
+		int last_X_{};
+		int last_Y_{};
 
 		std::unordered_map<Pressable, Action> action_map_{};
 		std::unordered_map<Button, Axis> axis_map_{};
 	};
 }
 
-
-void PAL::InputManager::init() noexcept
-{
-	RAWINPUTDEVICE rids[2];
-
-	rids[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
-	rids[0].usUsage = HID_USAGE_GENERIC_MOUSE;
-	rids[0].dwFlags = RIDEV_NOLEGACY;
-	rids[0].hwndTarget = nullptr;
-
-	rids[1].usUsagePage = HID_USAGE_PAGE_GENERIC;
-	rids[1].usUsage = HID_USAGE_GENERIC_KEYBOARD;
-	rids[1].dwFlags = RIDEV_NOLEGACY;
-	rids[1].hwndTarget = nullptr;
-
-	RegisterRawInputDevices(rids, 2, sizeof(rids[0]));
-}
+IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 void PAL::InputManager::process(const MSG& msg)
 {
-	if (msg.message == WM_INPUT)
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.WantCaptureMouse || io.WantCaptureKeyboard) return;
+
+	if (msg.message == WM_MOUSEMOVE)
 	{
-		RAWINPUT raw{};
-		UINT size = sizeof(raw);
+		int x = GET_X_LPARAM(msg.lParam);
+		int y = GET_Y_LPARAM(msg.lParam);
 
-		GetRawInputData(reinterpret_cast<HRAWINPUT>(msg.lParam), RID_INPUT, &raw, &size, sizeof(RAWINPUTHEADER));
+		if (x != last_X_)
+		{
+			int delta = x - last_X_;
+			axis_map_[Button::HorizontalLook](static_cast<float>(delta));
+			last_X_ = x;
+		}
 
-		if (raw.header.dwType == RIM_TYPEKEYBOARD && action_map_.contains(raw.data.keyboard.VKey))
+		if (y != last_Y_)
 		{
-			action_map_[raw.data.keyboard.VKey]();
+			int delta = y - last_Y_;
+			axis_map_[Button::VerticalLook](static_cast<float>(delta));
+			last_Y_ = y;
 		}
-		
-		if (raw.header.dwType == RIM_TYPEMOUSE)
-		{
-			axis_map_[Button::VerticalLook](static_cast<float>(raw.data.mouse.lLastY));
-			axis_map_[Button::HorizontalLook](static_cast<float>(raw.data.mouse.lLastX));
-		}
+	}
+	else if (msg.message == WM_KEYDOWN)
+	{
+		action_map_[msg.wParam]();
 	}
 }
 
@@ -107,15 +100,34 @@ namespace Graphics
 		RegisterClassEx(&window);
 		window_handle_ = CreateWindow(title.c_str(), title.c_str(), WS_BORDER, 0, 0, static_cast<int>(width), static_cast<int>(height), nullptr, nullptr, instance_, nullptr);
 
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+		io.DisplaySize.x = width;
+		io.DisplaySize.y = height;
+		ImGui::StyleColorsDark();
+		ImGui_ImplWin32_Init(window_handle_);
+
 		ShowWindow(window_handle_, SW_SHOW);
 		UpdateWindow(window_handle_);
-		renderer_->CreateContext(height, width, window_handle_);
 
-		ShowCursor(false);
+		RECT clientRect;
+		GetClientRect(window_handle_, &clientRect);
+
+		renderer_->CreateContext(clientRect.bottom, clientRect.right, window_handle_);
+
+		//ShowCursor(false);
+
 	}
 
 	LRESULT Window::WndProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam) noexcept
 	{
+		if (ImGui_ImplWin32_WndProcHandler(windowHandle, message, wParam, lParam))
+		{
+			return TRUE;
+		}
+
 		if (message == WM_DESTROY)
 		{ 
 			PostQuitMessage(0);
@@ -135,7 +147,7 @@ namespace Graphics
 		}
 		Create(title, height, width);
 	}
-
+	
 	void Window::Loop() {
 		MSG msg;
 		ZeroMemory(&msg, sizeof(msg));
@@ -187,8 +199,19 @@ namespace Graphics
 			{
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
+
 				input_manager_->process(msg);
 			}
+
+			
+
+			ImGui_ImplDX11_NewFrame();
+			ImGui_ImplWin32_NewFrame();
+			ImGui::NewFrame();
+
+			bool show = true;
+			ImGui::ShowDemoWindow(&show);
+			ImGui::Render();
 
 			renderer_->Render();
 		}
