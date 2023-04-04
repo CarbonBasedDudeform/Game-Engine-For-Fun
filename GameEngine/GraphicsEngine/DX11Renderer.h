@@ -33,8 +33,6 @@ namespace Graphics
 	class DX11Renderer final : public IRenderer 
 	{
 	public:
-		DX11Renderer() = default;
-
 		virtual bool CreateContext(size_t height, size_t width, HWND windowHandle) final;
 		void CreateSamplerState();
 		void CreatePixelShader();
@@ -43,12 +41,12 @@ namespace Graphics
 		void CreateDepthStencil(const size_t& height, const size_t& width);
 		void CreateBackBuffer();
 		virtual void Render() final;
-
+		
 	protected:
-		virtual void PreFrameRenderBehaviour() final;
-		virtual void PostFrameRenderBehaviour() final;
-		virtual void SetModelsToRender(Models const& models) final;
-		void MoveCamera(const ICamera& camera) final;
+		virtual void PreFrameRenderBehaviour() override final;
+		virtual void PostFrameRenderBehaviour() override final;
+		virtual void SetModelsToRender(Models const& models) override final;
+		virtual void MoveCamera(const ICamera& camera) override final;
 	private:
 		void InitialiseWorldViewProjection(size_t Height, size_t Width);
 		void CreateDevice();
@@ -73,6 +71,7 @@ namespace Graphics
 		DirectX::XMMATRIX world{};
 		DirectX::XMMATRIX view{};
 		DirectX::XMMATRIX projection{};
+		DirectX::XMVECTOR eye_{};
 
 		std::map<int, TextureStore> texture_pool_{};
 	};

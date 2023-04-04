@@ -1,4 +1,5 @@
 #include "DX11Renderer.h"
+#include "PointLightUI.h"
 
 #pragma warning(push, 0) //disable warnings for external headers
 #include <filesystem>   
@@ -186,11 +187,38 @@ namespace Graphics
 		void CreateConstantBuffer(ID3D11Device* device, ID3D11Buffer** constant_buffer)
 		{
 			D3D11_BUFFER_DESC cbd{ 0 };
-			cbd.ByteWidth = sizeof(ConstantBuffer);
+			cbd.ByteWidth = sizeof(PointLightConstantBuffer);
 			cbd.Usage = D3D11_USAGE_DEFAULT;
 			cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-
+			
 			device->CreateBuffer(&cbd, 0, constant_buffer);
+			// Define constant buffer data
+			//PointLightConstantBuffer constantBufferData = {};
+			//constantBufferData.lightPosition = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+			//constantBufferData.lightColor = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+			//constantBufferData.lightIntensity = 1.0f;
+
+			// Create constant buffer
+			//D3D11_BUFFER_DESC constantBufferDesc = {};
+			//constantBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+			//constantBufferDesc.ByteWidth = sizeof(PointLightConstantBuffer);
+			//constantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+			//constantBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+			//constantBufferDesc.MiscFlags = 0;
+			//constantBufferDesc.StructureByteStride = 0;
+			//
+			////D3D11_SUBRESOURCE_DATA constantBufferDataDesc = {};
+			////constantBufferDataDesc.pSysMem = &constantBufferData;
+			////constantBufferDataDesc.SysMemPitch = 0;
+			////constantBufferDataDesc.SysMemSlicePitch = 0;
+			//
+			//device->CreateBuffer(&constantBufferDesc, 0, constant_buffer);
+
+			//HRESULT hr = device->CreateBuffer(&constantBufferDesc, &constantBufferDataDesc, constant_buffer);
+			//if (FAILED(hr))
+			//{
+			//	// Handle error
+			//}
 		}
 
 		void CreateTexture(std::map<int, TextureStore>& texture_pool, ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Texture2D** texture, ID3D11ShaderResourceView** texture_view, const Image& material)
@@ -223,7 +251,25 @@ namespace Graphics
 		{
 			ID3DBlob* shader_blob{ };
 			auto const the_path = std::filesystem::current_path() / path_to_cso;
-			D3DReadFileToBlob(the_path.c_str(), &shader_blob);
+			auto hr = D3DReadFileToBlob(the_path.c_str(), &shader_blob);
+			if (FAILED(hr)) {
+				LPVOID lpMsgBuf;
+				DWORD dw = FormatMessage(
+					FORMAT_MESSAGE_ALLOCATE_BUFFER |
+					FORMAT_MESSAGE_FROM_SYSTEM |
+					FORMAT_MESSAGE_IGNORE_INSERTS,
+					NULL,
+					GetLastError(),
+					MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+					(LPTSTR)&lpMsgBuf,
+					0, NULL);
+
+				if (dw > 0) {
+					OutputDebugString((LPTSTR)lpMsgBuf);
+					LocalFree(lpMsgBuf);
+				}
+			}
+
 			const auto success_msg = std::format(L"{} shader: {}", !shader_blob ? L"Succesfulled loaded" : L"Failed to load", path_to_cso.wstring());
 			OutputDebugStringW(success_msg.c_str());
 
@@ -281,14 +327,14 @@ namespace Graphics
 
 	void DX11Renderer::CreatePixelShader()
 	{
-		ID3DBlob* pixel_shader_blob = General::LoadShaderBlob(L"TexturedPixelShaderDx11.cso");
+		ID3DBlob* pixel_shader_blob = General::LoadShaderBlob(L"PointLightPixelShader.cso");
 		device_->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), nullptr, &pixel_shader_);
 		context_->PSSetShader(pixel_shader_, nullptr, 0);
 	}
 
 	void DX11Renderer::CreateVertexShader()
 	{
-		ID3DBlob* vertex_shader_blob = General::LoadShaderBlob(L"TexturedVertexShaderDx11.cso");
+		ID3DBlob* vertex_shader_blob = General::LoadShaderBlob(L"PointLightVertexShader.cso");
 		device_->CreateVertexShader(vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), nullptr, &vertex_shader_);
 		context_->VSSetShader(vertex_shader_, nullptr, 0);
 
@@ -297,10 +343,11 @@ namespace Graphics
 		const D3D11_INPUT_ELEMENT_DESC input_desc[] =
 		{
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 		};
 
-		device_->CreateInputLayout(input_desc, 2, vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout); // 3 = sizeof(input_desc) / sizeof(d3d11_input_element_desc) ?
+		device_->CreateInputLayout(input_desc, 3, vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout); // 3 = sizeof(input_desc) / sizeof(d3d11_input_element_desc) ?
 		context_->IASetInputLayout(input_layout);
 	}
 
@@ -361,10 +408,10 @@ namespace Graphics
 
 	void DX11Renderer::MoveCamera(const ICamera& camera)
 	{
-		const auto eye = camera.getEye();
+		eye_ = camera.getEye();
 		const auto lookAt = camera.getLookAt();
 		const auto up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-		view = DirectX::XMMatrixLookAtLH(eye, lookAt, up);
+		view = DirectX::XMMatrixLookAtLH(eye_, lookAt, up);
 	}
 
 	void DX11Renderer::InitialiseWorldViewProjection(size_t Height, size_t Width)
@@ -436,12 +483,20 @@ namespace Graphics
 				context_->IASetVertexBuffers(0, 1, &to_render.vertices_buffer, &stride, &offset);
 				context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 				
+				
 				model.constant_buffer.world = DirectX::XMMatrixTranspose(world);
 				model.constant_buffer.view = DirectX::XMMatrixTranspose(view);
 				model.constant_buffer.projection = DirectX::XMMatrixTranspose(projection);
+				model.constant_buffer.eyePosition = eye_;
+
+				model.constant_buffer.lightPosition = DirectX::XMFLOAT3(UI::Light::Point::light.point[0], UI::Light::Point::light.point[1], UI::Light::Point::light.point[2]); //DirectX::XMLoadFloat4(&myFloat4);//DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+
+				model.constant_buffer.intensity = 0.5f;
+
 				context_->UpdateSubresource(to_render.constant_buffer, 0, 0, &model.constant_buffer, 0, 0);
 				
 				context_->VSSetConstantBuffers(0, 1, &to_render.constant_buffer);
+				context_->PSSetConstantBuffers(0, 1, &to_render.constant_buffer);
 				
 				if (to_render.texture_view)
 				{

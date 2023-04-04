@@ -34,9 +34,19 @@ namespace Graphics
 		DirectX::XMMATRIX projection;
 	};
 
+	struct PointLightConstantBuffer
+	{
+		DirectX::XMMATRIX projection;
+		DirectX::XMMATRIX view;
+		DirectX::XMMATRIX world;
+		DirectX::XMFLOAT3 lightPosition;
+		DirectX::XMVECTOR eyePosition;
+		float intensity;
+	};
+
 	struct Vertex
 	{
-		float x, y, z, u, v;
+		float x, y, z, n1, n2, n3, u, v;
 	};
 	
 	using ImageData = unsigned char*;
@@ -57,7 +67,7 @@ namespace Graphics
 		Model(std::filesystem::path const& filename);
 
 		bool isOk() const;
-		ConstantBuffer constant_buffer{};
+		PointLightConstantBuffer constant_buffer{};
 		std::shared_ptr<Image> getImage(const std::string& name);
 		MaterialNames getMaterialNames() const;
 		std::map<std::string, std::vector<Vertex>> texture_verts_bucket;

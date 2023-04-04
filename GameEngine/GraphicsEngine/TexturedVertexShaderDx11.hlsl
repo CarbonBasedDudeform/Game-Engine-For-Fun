@@ -1,18 +1,22 @@
 cbuffer WorldViewProjection {
-	matrix world;
-	matrix view;
 	matrix projection;
+	matrix view;
+	matrix world;
+	float4 lightPosition;
+	float4 eyePosition;
 };
 
 struct VertexInput
 {
 	float4 position : POSITION;
+	float3 normal : NORMAL;
 	float2 tex : TEXCOORD0;
 };
 
 struct PixelInput
 {
 	float4 position : SV_POSITION;
+	float3 normal : NORMAL;
 	float2 tex : TEXCOORD0;
 };
 

@@ -144,6 +144,7 @@
     <ClInclude Include="DX11Renderer.h" />
     <ClInclude Include="FreeRoamProjectionCamera.h" />
     <ClInclude Include="ICamera.h" />
+    <ClInclude Include="IMGUIManager.h" />
     <ClInclude Include="imgui\backends\imgui_impl_dx11.h" />
     <ClInclude Include="imgui\backends\imgui_impl_win32.h" />
     <ClInclude Include="imgui\imgui.h" />
@@ -153,12 +154,16 @@
     <ClInclude Include="imgui\imstb_truetype.h" />
     <ClInclude Include="IMoveableCamera.h" />
     <ClInclude Include="IRenderer.h" />
+    <ClInclude Include="IUserInterfaceManager.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="Outliner.h" />
+    <ClInclude Include="PointLightUI.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DX11Renderer.cpp" />
     <ClCompile Include="FreeRoamProjectionCamera.cpp" />
+    <ClCompile Include="IMGUIManager.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
@@ -167,6 +172,8 @@
     <ClCompile Include="imgui\imgui_tables.cpp" />
     <ClCompile Include="imgui\imgui_widgets.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="Outliner.cpp" />
+    <ClCompile Include="PointLightUI.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -181,6 +188,18 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="PointLightPixelShader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="PointLightVertexShader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="TexturedPixelShaderDx11.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>

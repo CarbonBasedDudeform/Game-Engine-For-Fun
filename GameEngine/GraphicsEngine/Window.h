@@ -11,6 +11,7 @@
 #include "IRenderer.h"
 #include "FreeRoamProjectionCamera.h"
 #include "Model.h"
+#include "IUserInterfaceManager.h"
 
 #define PLATFORM_WINDOWS true
 
@@ -43,9 +44,10 @@ namespace Graphics
 		HINSTANCE instance_{};
 		HWND window_handle_{};
 		 
-		std::unique_ptr<IRenderer> renderer_;
 		UpdateFunc update_func_{};
 
+		std::unique_ptr<IRenderer> renderer_{};
+		std::shared_ptr<UI::IUserInterfaceManager> user_interface_{};
 		std::shared_ptr<PAL::InputManager> input_manager_{};
 		Graphics::FreeRoamProjectionCamera camera_{0, 2.5f, -10.0f};
 	};

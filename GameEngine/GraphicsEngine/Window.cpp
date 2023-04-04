@@ -2,12 +2,10 @@
 #include "Window.h"
 #include "windowsx.h"
 #include "DX11Renderer.h"
+#include "IMGUIManager.h"
 
-#include "hidusage.h"
-
-#include "ImGui/imgui.h"
+#include <Windows.h>
 #include "ImGui/Backends/imgui_impl_win32.h"
-#include "ImGui/Backends/imgui_impl_dx11.h"
 
 namespace PAL
 {
@@ -28,6 +26,9 @@ namespace PAL
 		void registerAction(Pressable button, const Action&& action);
 		void registerAxis(Button button, const Axis&& axis);
 		void process(const MSG& msg);
+		void SetUserInterface(const std::shared_ptr<Graphics::UI::IUserInterfaceManager>& user_interface) {
+			user_interface_ = user_interface;
+		}
 
 	private:
 		int last_X_{};
@@ -35,15 +36,17 @@ namespace PAL
 
 		std::unordered_map<Pressable, Action> action_map_{};
 		std::unordered_map<Button, Axis> axis_map_{};
+		std::shared_ptr<Graphics::UI::IUserInterfaceManager> user_interface_{};
 	};
 }
 
-IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 void PAL::InputManager::process(const MSG& msg)
 {
-	ImGuiIO& io = ImGui::GetIO();
-	if (io.WantCaptureMouse || io.WantCaptureKeyboard) return;
+	if (user_interface_->ProcessInput())
+	{
+		return;
+	}
 
 	if (msg.message == WM_MOUSEMOVE)
 	{
@@ -66,7 +69,10 @@ void PAL::InputManager::process(const MSG& msg)
 	}
 	else if (msg.message == WM_KEYDOWN)
 	{
-		action_map_[msg.wParam]();
+		if (action_map_.contains(msg.wParam))
+		{
+			action_map_[msg.wParam]();
+		}
 	}
 }
 
@@ -80,6 +86,7 @@ void PAL::InputManager::registerAxis(Button button, const Axis&& axis)
 	axis_map_[button] = axis;
 }
 
+IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace Graphics
 {
@@ -89,7 +96,7 @@ namespace Graphics
 		ZeroMemory(&window, sizeof(window));
 		window.cbSize = sizeof(WNDCLASSEX);
 		window.style = CS_CLASSDC;
-		window.lpfnWndProc = WndProc;
+		window.lpfnWndProc = &WndProc;
 		window.hInstance = instance_;
 		window.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
 		window.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
@@ -100,14 +107,7 @@ namespace Graphics
 		RegisterClassEx(&window);
 		window_handle_ = CreateWindow(title.c_str(), title.c_str(), WS_BORDER, 0, 0, static_cast<int>(width), static_cast<int>(height), nullptr, nullptr, instance_, nullptr);
 
-		IMGUI_CHECKVERSION();
-		ImGui::CreateContext();
-		ImGuiIO& io = ImGui::GetIO(); (void)io;
-
-		io.DisplaySize.x = width;
-		io.DisplaySize.y = height;
-		ImGui::StyleColorsDark();
-		ImGui_ImplWin32_Init(window_handle_);
+		user_interface_->Initialise(width, height, window_handle_);
 
 		ShowWindow(window_handle_, SW_SHOW);
 		UpdateWindow(window_handle_);
@@ -121,11 +121,12 @@ namespace Graphics
 
 	}
 
+	
 	LRESULT Window::WndProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam) noexcept
 	{
 		if (ImGui_ImplWin32_WndProcHandler(windowHandle, message, wParam, lParam))
 		{
-			return TRUE;
+			return true;
 		}
 
 		if (message == WM_DESTROY)
@@ -139,6 +140,7 @@ namespace Graphics
 
 	Window::Window(const std::string& title, size_t height, size_t width, RendererTypes renderType)
 		: input_manager_(std::make_shared<PAL::InputManager>())
+		, user_interface_(std::make_shared<UI::IMGUIManager>())
 	{
 		switch (renderType)
 		{
@@ -193,6 +195,8 @@ namespace Graphics
 				renderer_->MoveCamera(camera_);
 			});
 
+		input_manager_->SetUserInterface(user_interface_);
+
 		while (msg.message != WM_QUIT)
 		{
 			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
@@ -203,16 +207,7 @@ namespace Graphics
 				input_manager_->process(msg);
 			}
 
-			
-
-			ImGui_ImplDX11_NewFrame();
-			ImGui_ImplWin32_NewFrame();
-			ImGui::NewFrame();
-
-			bool show = true;
-			ImGui::ShowDemoWindow(&show);
-			ImGui::Render();
-
+			user_interface_->Render();
 			renderer_->Render();
 		}
 	}

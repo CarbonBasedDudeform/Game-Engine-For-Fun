@@ -68,6 +68,7 @@ GameEngine/NetworkingEngine/Debug/x64/*
 GameEngine/GameplayEngine/Debug/x64/*
 GameEngine/AudioEngine/Debug/x64/*
 GameEngine/Debug/*
+GameEngine/DemoApp/x64/Release/*
 *.ipch
 *.lastbuildstate
 *.pdb
@@ -89,3 +90,7 @@ GameEngine/GameplayEngine/x64/Debug/game.nativecodeanalysis.xml
 *.recipe
 CodeAnalysisResultManifest.txt
 *.ilk
+*.iobj
+*.ipdb
+*.iobj
+*.ipdb

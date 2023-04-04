@@ -22,6 +22,12 @@
     <Filter Include="ImGui\Backends">
       <UniqueIdentifier>{a461e14c-8815-410d-a6ce-fc36017fdc9d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\UI">
+      <UniqueIdentifier>{973916d6-87e3-42ef-9041-51621f10eae8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\UI">
+      <UniqueIdentifier>{cd40499b-5436-4217-9f53-38fbf611dda6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Window.h">
@@ -66,6 +72,18 @@
     <ClInclude Include="imgui\backends\imgui_impl_win32.h">
       <Filter>ImGui\Backends</Filter>
     </ClInclude>
+    <ClInclude Include="IUserInterfaceManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IMGUIManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PointLightUI.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Outliner.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Window.cpp">
@@ -101,6 +119,15 @@
     <ClCompile Include="imgui\backends\imgui_impl_win32.cpp">
       <Filter>ImGui\Backends</Filter>
     </ClCompile>
+    <ClCompile Include="IMGUIManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PointLightUI.cpp">
+      <Filter>Source Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Outliner.cpp">
+      <Filter>Source Files\UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="DefaultVertexShaderDx11.hlsl">
@@ -113,6 +140,12 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="TexturedVertexShaderDx11.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="PointLightPixelShader.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="PointLightVertexShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

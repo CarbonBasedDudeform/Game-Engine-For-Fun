@@ -1,4 +1,6 @@
 #pragma once
+#include <DirectXMath.h>
+
 namespace Graphics
 {
 	class ICamera

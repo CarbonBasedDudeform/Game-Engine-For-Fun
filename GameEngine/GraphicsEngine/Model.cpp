@@ -55,6 +55,9 @@ namespace Graphics
 					texture_verts_bucket[material_name].push_back(Vertex{ attribute.vertices[3*idx.vertex_index + 0], 
 													attribute.vertices[3*idx.vertex_index + 1], 
 													attribute.vertices[3*idx.vertex_index + 2],
+													attribute.normals[3 * idx.normal_index + 0],
+													attribute.normals[3 * idx.normal_index + 1],
+													attribute.normals[3 * idx.normal_index + 2],
 													texture_coords_exist ? attribute.texcoords[2 * idx.texcoord_index + 0] : 0,
 													texture_coords_exist ? attribute.texcoords[2 * idx.texcoord_index + 1] : 0
 					});
