@@ -142,6 +142,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="DX11Renderer.h" />
+    <ClInclude Include="EditorObject.h" />
     <ClInclude Include="FreeRoamProjectionCamera.h" />
     <ClInclude Include="ICamera.h" />
     <ClInclude Include="IMGUIManager.h" />

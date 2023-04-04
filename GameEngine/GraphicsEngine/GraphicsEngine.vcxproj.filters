@@ -84,6 +84,9 @@
     <ClInclude Include="Outliner.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
+    <ClInclude Include="EditorObject.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Window.cpp">

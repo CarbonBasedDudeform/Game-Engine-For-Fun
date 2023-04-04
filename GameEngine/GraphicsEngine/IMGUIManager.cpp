@@ -5,7 +5,6 @@
 #include "ImGui/Backends/imgui_impl_dx11.h"
 
 #include "hidusage.h"
-#include "PointLightUI.h"
 #include "Outliner.h"
 
 namespace Graphics::UI {
@@ -25,7 +24,6 @@ namespace Graphics::UI {
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
-		::UI::Light::Point::render();
 		::UI::World::Outliner::render();
 
 		ImGui::Render();

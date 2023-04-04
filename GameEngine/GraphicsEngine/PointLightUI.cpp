@@ -2,9 +2,9 @@
 #include "ImGui/imgui.h"
 
 namespace UI::Light::Point {
-	void render() {
+	void EditorPointLight::render() {
 
-		ImGui::Begin("Point Light");
+		ImGui::Begin(name.c_str());
 
 		ImGui::ColorEdit4("Hue", light.hue);
 		//ImGui::InputFloat3("Location", pl.point);

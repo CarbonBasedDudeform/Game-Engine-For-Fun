@@ -489,7 +489,7 @@ namespace Graphics
 				model.constant_buffer.projection = DirectX::XMMatrixTranspose(projection);
 				model.constant_buffer.eyePosition = eye_;
 
-				model.constant_buffer.lightPosition = DirectX::XMFLOAT3(UI::Light::Point::light.point[0], UI::Light::Point::light.point[1], UI::Light::Point::light.point[2]); //DirectX::XMLoadFloat4(&myFloat4);//DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+				model.constant_buffer.lightPosition = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);//DirectX::XMFLOAT3(UI::Light::Point::light.point[0], UI::Light::Point::light.point[1], UI::Light::Point::light.point[2]); //DirectX::XMLoadFloat4(&myFloat4);//DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
 
 				model.constant_buffer.intensity = 0.5f;
 

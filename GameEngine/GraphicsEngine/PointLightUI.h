@@ -1,5 +1,6 @@
 #pragma once
 #include "IRenderer.h"
+#include "EditorObject.h"
 
 struct Vector3D {
 	float x{};
@@ -17,6 +18,10 @@ struct PointLight {
 };
 
 namespace UI::Light::Point {
-	static PointLight light{};
-	void render();
+	struct EditorPointLight : public EditorObject {
+		EditorPointLight(const std::string& name) : EditorObject(name) {};
+
+		PointLight light{};
+		virtual void render() override;
+	};
 };
