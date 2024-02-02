@@ -1,0 +1,3 @@
+[submodule "GameEngine/tinyobjloader"]
+	path = GameEngine/tinyobjloader
+	url = https://github.com/tinyobjloader/tinyobjloader.git
