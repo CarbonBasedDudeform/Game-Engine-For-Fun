@@ -94,3 +94,5 @@ CodeAnalysisResultManifest.txt
 *.ipdb
 *.iobj
 *.ipdb
+
+GameEngine/MacApp/output

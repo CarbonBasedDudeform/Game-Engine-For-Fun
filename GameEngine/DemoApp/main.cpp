@@ -1,6 +1,6 @@
 #include <iostream>
 #include <memory>
-#include <Game.h>
+#include <GameplayEngine/Game.h>
 #include <Scene.h>
 
 #include <filesystem>
