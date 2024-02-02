@@ -18,6 +18,9 @@ namespace PAL
 
 namespace Graphics
 {
+	class Model;
+	using Models = std::vector<Model>;
+
 	class Window final
 	{
 	public:
@@ -25,7 +28,7 @@ namespace Graphics
 		Window(const std::string& title, size_t height, size_t width);
 		~Window();
 
-		//void set_scene(Models const& current_scene_models, UpdateFunc const&& updateFunc);
+		void set_scene(Models const& current_scene_models);
 		void loop();
 
 	private:

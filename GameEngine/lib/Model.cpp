@@ -1,14 +1,11 @@
-#include "Model.h"
-
-#pragma warning(push, 0) //disable warnings for external headers
-
+#include <Graphics/Model.h>
 
 #include <iostream> //TODO: replace with actual logging service...
 #define TINYOBJLOADER_IMPLEMENTATION
-#include <tinyobj_loader_opt.h>
+#include <tiny_obj_loader.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-#pragma warning(pop)
+#include <exception>
 
 namespace Graphics
 {
@@ -46,7 +43,7 @@ namespace Graphics
 				auto const texture_index = shape.mesh.material_ids[f];
 				auto const material_name = materials[texture_index].name;
 				bool const material_doesnt_exist = materials_.find(material_name) == materials_.end();
-				if (material_doesnt_exist) throw std::exception{ "Trying to use non-existent material" };
+				if (material_doesnt_exist) throw std::runtime_error{ "Trying to use non-existent material" };
 		
 				for (int v = 0; v < fv; v++)
 				{

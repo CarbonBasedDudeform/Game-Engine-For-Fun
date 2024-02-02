@@ -1,12 +1,10 @@
 #pragma once
 
-#pragma warning(push, 0) //disable warnings for external headers
 #include <vector>
 #include <string>
 #include <filesystem>
 #include <map>
-#include <DirectXMath.h>
-#pragma warning(pop)
+//#include <DirectXMath.h>
 
 namespace Graphics
 {
@@ -26,23 +24,22 @@ namespace Graphics
 
 	Rotation makeRotationMatrixUsingRadians(float angle) noexcept;
 
-	
+	// struct ConstantBuffer
+	// {
+	// 	DirectX::XMMATRIX world;
+	// 	DirectX::XMMATRIX view;
+	// 	DirectX::XMMATRIX projection;
+	// };
 
-	struct ConstantBuffer {
-		DirectX::XMMATRIX world;
-		DirectX::XMMATRIX view;
-		DirectX::XMMATRIX projection;
-	};
-
-	struct PointLightConstantBuffer
-	{
-		DirectX::XMMATRIX projection;
-		DirectX::XMMATRIX view;
-		DirectX::XMMATRIX world;
-		DirectX::XMFLOAT3 lightPosition;
-		DirectX::XMVECTOR eyePosition;
-		float intensity;
-	};
+	// struct PointLightConstantBuffer
+	// {
+	// 	DirectX::XMMATRIX projection;
+	// 	DirectX::XMMATRIX view;
+	// 	DirectX::XMMATRIX world;
+	// 	DirectX::XMFLOAT3 lightPosition;
+	// 	DirectX::XMVECTOR eyePosition;
+	// 	float intensity;
+	// };
 
 	struct Vertex
 	{
@@ -67,7 +64,7 @@ namespace Graphics
 		Model(std::filesystem::path const& filename);
 
 		bool isOk() const;
-		PointLightConstantBuffer constant_buffer{};
+		//PointLightConstantBuffer constant_buffer{};
 		std::shared_ptr<Image> getImage(const std::string& name);
 		MaterialNames getMaterialNames() const;
 		std::map<std::string, std::vector<Vertex>> texture_verts_bucket;

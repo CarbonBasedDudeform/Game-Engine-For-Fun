@@ -1,6 +1,8 @@
 
 #include <SDL.h>
 #include <Graphics/Window.h>
+#include <Graphics/Model.h>
+
 //#include "windowsx.h"
 //#include "DX11Renderer.h"
 //#include "IMGUIManager.h"
@@ -228,9 +230,9 @@ namespace Graphics
     	}
 	}
 
-	//void Window::set_scene(Models const& current_scene_models, UpdateFunc const&& updateFunc)
-	//{
-	//	update_func = updateFunc;
-	//	renderer->SetModelsToRender(current_scene_models);
-	//}
+	void Window::set_scene(Models const& current_scene_models)
+	{
+		//update_func = updateFunc;
+		//renderer->SetModelsToRender(current_scene_models);
+	}
 }
