@@ -1,6 +1,6 @@
 # Compiler settings
 CXX = clang++
-CXXFLAGS = -std=c++20 $(shell sdl2-config --cflags) -I../include
+CXXFLAGS = -std=c++20 $(shell sdl2-config --cflags) -I../include -I../tinyobjloader -I../stb
 LDFLAGS = $(shell sdl2-config --libs)
 
 # Directories
@@ -11,7 +11,7 @@ LIBDIR = ../lib
 # Target executable name
 TARGET = $(OUTDIR)/MacDemoApp
 
-# Source files - Include both DemoApp and GraphicsEngine sources
+# Source files - Include both DemoApp and GraphicsEngine sources, and tinyobjloader
 SOURCES = $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(LIBDIR)/*.cpp)
 
 # Object files
