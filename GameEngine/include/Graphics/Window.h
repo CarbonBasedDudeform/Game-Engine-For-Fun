@@ -11,6 +11,7 @@
 
 struct SDL_Window;
 
+
 namespace PAL
 {
 	class InputManager;
@@ -19,6 +20,7 @@ namespace PAL
 namespace Graphics
 {
 	class Model;
+	class IRenderer;
 	using Models = std::vector<Model>;
 
 	class Window final
@@ -39,7 +41,7 @@ namespace Graphics
 		std::unique_ptr<SDL_Window, decltype(sdl_deleter)> window {};
 		//UpdateFunc update_func{};
 
-		//std::unique_ptr<IRenderer> renderer{};
+		std::unique_ptr<IRenderer> renderer {nullptr};
 		//std::shared_ptr<UI::IUserInterfaceManager> user_interface{};
 		//std::shared_ptr<PAL::InputManager> input_manager{};
 		//Graphics::FreeRoamProjectionCamera camera{0, 2.5f, -10.0f};

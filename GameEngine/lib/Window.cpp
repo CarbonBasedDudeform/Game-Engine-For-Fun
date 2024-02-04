@@ -2,6 +2,7 @@
 #include <SDL.h>
 #include <Graphics/Window.h>
 #include <Graphics/Model.h>
+#include <Graphics/IRenderer.h>
 
 //#include "windowsx.h"
 //#include "DX11Renderer.h"
@@ -148,7 +149,7 @@ namespace Graphics
 		//switch (renderType)
 		//{
 		//case RendererTypes::DX11:
-			//renderer = std::make_unique<DX11Renderer>();
+		//	renderer = std::make_unique<DX11Renderer>();
 		//}
 		create(title, height, width);
 	}
@@ -232,7 +233,9 @@ namespace Graphics
 
 	void Window::set_scene(Models const& current_scene_models)
 	{
+		if (!renderer) return;
+
 		//update_func = updateFunc;
-		//renderer->SetModelsToRender(current_scene_models);
+		renderer->set_models_to_render(current_scene_models);
 	}
 }
